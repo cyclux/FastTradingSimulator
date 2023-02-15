@@ -7,9 +7,9 @@ Returns:
 import traceback
 import pandas as pd
 
-from fts_utils import convert_symbol_str
-from fts_trader_buys import buy_confirmed
-from fts_trader_sells import sell_confirmed
+from fatrasi.utils import convert_symbol_str
+from fatrasi.trader_buys import buy_confirmed
+from fatrasi.trader_sells import sell_confirmed
 
 
 def check_timestamp_difference(start=None, end=None, freq="5min"):

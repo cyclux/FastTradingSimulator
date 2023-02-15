@@ -2,18 +2,18 @@
 pip install numpy pandas pyarrow pymongo bitfinex-api-py websockets tensorflow-probability numexpr Bottleneck numba
 """
 import asyncio
-from fts_utils import connect_api
-from fts_config import Config
-from fts_backend import Backend
-from fts_market_history import MarketHistory
-from fts_market_updater import MarketUpdater
-from fts_exchange_api import ExchangeAPI
-from fts_exchange_websocket import ExchangeWebsocket
-from fts_trader import Trader
-from fts_simulator import run_simulation
+from fatrasi.utils import connect_api
+from fatrasi.config import Config
+from fatrasi.backend import Backend
+from fatrasi.market_history import MarketHistory
+from fatrasi.market_updater import MarketUpdater
+from fatrasi.exchange_api import ExchangeAPI
+from fatrasi.exchange_websocket import ExchangeWebsocket
+from fatrasi.trader import Trader
+from fatrasi.simulator import run_simulation
 
 
-class FastTradingSimulator:
+class TradingEngine:
     """_summary_"""
 
     def __init__(self, user_config, assets=None):

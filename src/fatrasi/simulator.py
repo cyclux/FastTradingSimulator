@@ -28,9 +28,9 @@ Returns:
 import numpy as np
 import numba as nb
 
-from fts_simulator_utils import get_snapshot_indices, calc_metrics, to_numba_dict
-from fts_simulator_buys import check_buy, get_buy_options
-from fts_simulator_sells import check_sell
+from fatrasi.simulator_utils import get_snapshot_indices, calc_metrics, to_numba_dict
+from fatrasi.simulator_buys import check_buy, get_buy_options
+from fatrasi.simulator_sells import check_sell
 
 
 # FIXME: Add money which is in assets on the market

@@ -9,7 +9,7 @@ from functools import reduce
 
 import pandas as pd
 
-from fts_utils import (
+from fatrasi.utils import (
     get_now,
     get_timedelta,
     get_time_minus_delta,

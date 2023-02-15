@@ -1,7 +1,7 @@
 """_summary_
 """
 import numpy as np
-from fts_utils import calc_fee, convert_symbol_str
+from fatrasi.utils import calc_fee, convert_symbol_str
 
 
 def check_sell_options(fts, latest_prices=None, timestamp=None):

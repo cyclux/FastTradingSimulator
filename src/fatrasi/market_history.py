@@ -6,8 +6,8 @@ import sys
 import os
 from pathlib import Path
 import pandas as pd
-from fts_utils import ms_to_ns, get_col_names, ns_to_ms, get_time_minus_delta
-from fts_market_metrics import get_init_relevant_assets
+from fatrasi.utils import ms_to_ns, get_col_names, ns_to_ms, get_time_minus_delta
+from fatrasi.market_metrics import get_init_relevant_assets
 
 
 def get_pct_change(df_history, as_factor=True):

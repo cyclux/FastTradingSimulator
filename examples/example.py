@@ -1,14 +1,14 @@
 """_summary_
 """
 
-from fts import FastTradingSimulator
+import fatrasi as fts
 
 config = {
     # trading strategy
     "trader_id": 1,
     "use_backend": True,
     "dry_run": False,
-    "amount_invest_fiat": 100,
+    "amount_invest_fiat": 1000,
     "amount_invest_relative": None,
     "buy_limit_strategy": False,
     "buy_opportunity_factor": 0.10,
@@ -39,4 +39,4 @@ config = {
 }
 
 assets = []  # ["BTC", "ETH", "XMR"]
-fts = FastTradingSimulator(config, assets).run()
+fts.TradingEngine(config, assets).run()

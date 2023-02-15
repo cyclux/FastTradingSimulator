@@ -6,7 +6,7 @@ Returns:
 
 import numpy as np
 import pandas as pd
-from fts_utils import get_col_names
+from fatrasi.utils import get_col_names
 
 
 ###########################

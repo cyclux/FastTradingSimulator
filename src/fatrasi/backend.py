@@ -12,7 +12,7 @@ import pandas as pd
 from pymongo import MongoClient
 from pymongo.errors import AutoReconnect, ConnectionFailure, CollectionInvalid, ConfigurationError, OperationFailure
 
-from fts_utils import get_df_datetime_index
+from fatrasi.utils import get_df_datetime_index
 
 ##################
 # DB interaction #

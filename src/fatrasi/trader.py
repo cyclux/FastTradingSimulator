@@ -7,9 +7,9 @@ Returns:
 import sys
 import numpy as np
 import pandas as pd
-from fts_utils import convert_symbol_str
-from fts_trader_buys import check_buy_options, buy_assets
-from fts_trader_sells import check_sell_options, sell_assets, sell_confirmed
+from fatrasi.utils import convert_symbol_str
+from fatrasi.trader_buys import check_buy_options, buy_assets
+from fatrasi.trader_sells import check_sell_options, sell_assets, sell_confirmed
 
 
 class Trader:
