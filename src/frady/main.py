@@ -1,7 +1,7 @@
 """_summary_
 pip install numpy pandas pyarrow pymongo bitfinex-api-py websockets tensorflow-probability numexpr Bottleneck numba
 """
-import os
+from os import getcwd
 import asyncio
 from frady.utils import connect_api
 from frady.config import Config
@@ -42,7 +42,7 @@ class TradingEngine:
         return market_updater_api
 
     def register_market_history(self):
-        working_dir = os.getcwd()
+        working_dir = getcwd()
         market_history = MarketHistory(fts=self, path_current=working_dir)
         return market_history
 
