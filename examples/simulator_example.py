@@ -1,7 +1,7 @@
 """_summary_
 """
 
-from fatrasi import TradingEngine
+from frady import TradingEngine
 
 config = {
     # trading strategy
@@ -23,7 +23,7 @@ config = {
     "exchange_fee": 0.15,
     "budget": 1100,
     # history config
-    "asset_interval": "5min",
+    "candle_interval": "5min",
     "history_timeframe": "750days",
     "base_currency": "USD",
     "exchange": "bitfinex",
@@ -42,5 +42,5 @@ config = {
 }
 
 assets = []  # ["BTC", "ETH", "XMR"]
-sim_total_profit = TradingEngine(config, assets).run_sim()
-print(sim_total_profit)
+sim_result = TradingEngine(config, assets).run_sim()
+print(sim_result["profit"])

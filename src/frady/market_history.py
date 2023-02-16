@@ -6,8 +6,8 @@ import sys
 import os
 from pathlib import Path
 import pandas as pd
-from fatrasi.utils import ms_to_ns, get_col_names, ns_to_ms, get_time_minus_delta
-from fatrasi.market_metrics import get_init_relevant_assets
+from frady.utils import ms_to_ns, get_col_names, ns_to_ms, get_time_minus_delta
+from frady.market_metrics import get_init_relevant_assets
 
 
 def get_pct_change(df_history, as_factor=True):
@@ -68,7 +68,9 @@ class MarketHistory:
         self.df_market_history = None
 
         # Set paths
-        self.path_current = Path(os.path.dirname(os.path.abspath(__file__))) if path_current is None else path_current
+        self.path_current = (
+            Path(os.path.dirname(os.path.abspath(__file__))) if path_current is None else Path(path_current)
+        )
         self.path_feather = (
             self.path_current / "data/inputs" if path_history_dumps is None else self.path_current / path_history_dumps
         )
@@ -110,7 +112,7 @@ class MarketHistory:
                 start = start_time["timestamp"]
                 first_local_candle_timestamp = self.get_local_candle_timestamp(position="first")
 
-                end_time = get_time_minus_delta(first_local_candle_timestamp, delta=self.config.asset_interval)
+                end_time = get_time_minus_delta(first_local_candle_timestamp, delta=self.config.candle_interval)
                 end = end_time["timestamp"]
             print(
                 f"[INFO] Fetching {self.config.history_timeframe} ({start} - {end}) of market history "

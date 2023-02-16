@@ -1,6 +1,7 @@
 """_summary_
 """
 
+import yaml
 
 SIM_RELEVANT_ENTRIES = [
     "index_start",
@@ -23,10 +24,18 @@ SIM_RELEVANT_ENTRIES = [
 ]
 
 
+def load_yaml_config():
+    with open("config.yaml", "r", encoding="utf8") as stream:
+        yaml_config = yaml.safe_load(stream)
+    return yaml_config
+
+
 class Config:
     """_summary_"""
 
     def __init__(self, config_input):
+        if config_input is None:
+            config_input = load_yaml_config()
         self.update_history = config_input.get("update_history", False)
         self.run_exchange_api = config_input.get("run_exchange_api", False)
         self.keep_updated = config_input.get("keep_updated", False)
@@ -35,7 +44,7 @@ class Config:
         self.load_history_via = config_input.get("load_history_via", "feather").lower()
         self.check_db_consistency = config_input.get("check_db_consistency", False)
         self.dump_to_feather = config_input.get("dump_to_feather", False)
-        self.asset_interval = config_input.get("asset_interval", "5min")
+        self.candle_interval = config_input.get("candle_interval", "5min")
         self.base_currency = config_input.get("base_currency", "USD")
         self.history_timeframe = config_input.get("history_timeframe", "250h")
         self.backend = config_input.get("backend", "mongodb").lower()

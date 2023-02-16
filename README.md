@@ -1,4 +1,4 @@
-# Fatrasi
+# frady
 
 ### **Fa**st **Tra**ding **Si**mulator
 
@@ -6,7 +6,7 @@
 
 ### pip
 
-`pip install fatrasi`
+`pip install frady`
 
 ### Docker
 

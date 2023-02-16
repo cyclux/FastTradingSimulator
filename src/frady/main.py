@@ -1,16 +1,17 @@
 """_summary_
 pip install numpy pandas pyarrow pymongo bitfinex-api-py websockets tensorflow-probability numexpr Bottleneck numba
 """
+import os
 import asyncio
-from fatrasi.utils import connect_api
-from fatrasi.config import Config
-from fatrasi.backend import Backend
-from fatrasi.market_history import MarketHistory
-from fatrasi.market_updater import MarketUpdater
-from fatrasi.exchange_api import ExchangeAPI
-from fatrasi.exchange_websocket import ExchangeWebsocket
-from fatrasi.trader import Trader
-from fatrasi.simulator import run_simulation
+from frady.utils import connect_api
+from frady.config import Config
+from frady.backend import Backend
+from frady.market_history import MarketHistory
+from frady.market_updater import MarketUpdater
+from frady.exchange_api import ExchangeAPI
+from frady.exchange_websocket import ExchangeWebsocket
+from frady.trader import Trader
+from frady.simulator import run_simulation
 
 
 class TradingEngine:
@@ -41,7 +42,8 @@ class TradingEngine:
         return market_updater_api
 
     def register_market_history(self):
-        market_history = MarketHistory(fts=self)
+        working_dir = os.getcwd()
+        market_history = MarketHistory(fts=self, path_current=working_dir)
         return market_history
 
     def connect_api(self):
@@ -95,5 +97,5 @@ class TradingEngine:
 
     def run_sim(self):
         asyncio.run(self.init(is_sim=True))
-        sim_total_profit, _, _ = run_simulation(fts=self)
-        return sim_total_profit
+        sim_result = run_simulation(fts=self)
+        return sim_result

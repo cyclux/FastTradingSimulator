@@ -6,7 +6,7 @@ Returns:
 
 import numpy as np
 import pandas as pd
-from fatrasi.utils import convert_symbol_str, ns_to_ms
+from frady.utils import convert_symbol_str, ns_to_ms
 
 
 class ExchangeAPI:

@@ -12,7 +12,7 @@ import pandas as pd
 from pymongo import MongoClient
 from pymongo.errors import AutoReconnect, ConnectionFailure, CollectionInvalid, ConfigurationError, OperationFailure
 
-from fatrasi.utils import get_df_datetime_index
+from frady.utils import get_df_datetime_index
 
 ##################
 # DB interaction #
@@ -139,7 +139,7 @@ class Backend:
             "start_datetime": pd.Timestamp(index[0], unit="ms", tz="UTC"),
             "end_datetime": pd.Timestamp(index[-1], unit="ms", tz="UTC"),
         }
-        real_index = get_df_datetime_index(timeframe, freq=self.config.asset_interval)["t"].to_list()
+        real_index = get_df_datetime_index(timeframe, freq=self.config.candle_interval)["t"].to_list()
         current_index = index.to_list()
         index_diff = np.setdiff1d(real_index, current_index)
         if len(index_diff) > 0:

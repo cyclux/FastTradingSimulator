@@ -7,9 +7,9 @@ Returns:
 import traceback
 import pandas as pd
 
-from fatrasi.utils import convert_symbol_str
-from fatrasi.trader_buys import buy_confirmed
-from fatrasi.trader_sells import sell_confirmed
+from frady.utils import convert_symbol_str
+from frady.trader_buys import buy_confirmed
+from frady.trader_sells import sell_confirmed
 
 
 def check_timestamp_difference(start=None, end=None, freq="5min"):
@@ -128,8 +128,8 @@ class ExchangeWebsocket:
             asset_list, base_currency=self.config.base_currency, to_exchange=True, exchange=self.config.exchange
         )
         for symbol in asset_list_bfx:
-            # asset_interval[:-2] to convert "5min" -> "5m"
-            await self.bfx_api_pub.ws.subscribe_candles(symbol, self.config.asset_interval[:-2])
+            # candle_interval[:-2] to convert "5min" -> "5m"
+            await self.bfx_api_pub.ws.subscribe_candles(symbol, self.config.candle_interval[:-2])
         self.ws_subs_finished = True
 
     async def ws_init_connection(self):
@@ -164,7 +164,7 @@ class ExchangeWebsocket:
                 print(f"[DEBUG] last_candle_timestamp set to {self.last_candle_timestamp}")
                 # Check sync of candle history. Patch if neccesary
                 diff_range_candle_timestamps = check_timestamp_difference(
-                    start=self.latest_candle_timestamp, end=self.last_candle_timestamp, freq=self.config.asset_interval
+                    start=self.latest_candle_timestamp, end=self.last_candle_timestamp, freq=self.config.candle_interval
                 )
                 if len(diff_range_candle_timestamps) > 0:
                     timestamp_patch_history_start = min(diff_range_candle_timestamps)
@@ -194,7 +194,7 @@ class ExchangeWebsocket:
             candles_last_timestamp = self.ws_candle_cache.get(self.last_candle_timestamp, {})
             if not candles_last_timestamp:
                 print(
-                    f"[WARNING] Last websocket {self.config.asset_interval[:-2]} timestamp has no data from any asset."
+                    f"[WARNING] Last websocket {self.config.candle_interval[:-2]} timestamp has no data from any asset."
                 )
                 # TODO: Trigger notification email?
 

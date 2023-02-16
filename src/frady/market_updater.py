@@ -9,7 +9,7 @@ from functools import reduce
 
 import pandas as pd
 
-from fatrasi.utils import (
+from frady.utils import (
     get_now,
     get_timedelta,
     get_time_minus_delta,
@@ -43,7 +43,7 @@ class MarketUpdater:
         self.config = fts.config
 
     async def get_timeframe(self, start=None, end=None):
-        candle_freq_in_ms = get_timedelta(self.config.asset_interval)["timestamp"]
+        candle_freq_in_ms = get_timedelta(self.config.candle_interval)["timestamp"]
         timeframe = {}
 
         timeframe["start_timestamp"] = (
@@ -98,7 +98,7 @@ class MarketUpdater:
             return None
         history_df_list = []
         if timeframe is not None:
-            history_df_list.append(get_df_datetime_index(timeframe, freq=self.config.asset_interval))
+            history_df_list.append(get_df_datetime_index(timeframe, freq=self.config.candle_interval))
 
         for asset_hist in history_update.values():
             if len(asset_hist) > 0:
@@ -136,7 +136,7 @@ class MarketUpdater:
                 )
         else:
             print(
-                f"[INFO] Update request too early. Frequency is {self.config.asset_interval}. "
+                f"[INFO] Update request too early. Frequency is {self.config.candle_interval}. "
                 + f"Wait at least {int(abs(timeframe['ms_until_wait_over']) / 1000 // 60)} min for next try."
             )
         return df_market_history_update

@@ -28,9 +28,9 @@ Returns:
 import numpy as np
 import numba as nb
 
-from fatrasi.simulator_utils import get_snapshot_indices, calc_metrics, to_numba_dict
-from fatrasi.simulator_buys import check_buy, get_buy_options
-from fatrasi.simulator_sells import check_sell
+from frady.simulator_utils import get_snapshot_indices, calc_metrics, to_numba_dict
+from frady.simulator_buys import check_buy, get_buy_options
+from frady.simulator_sells import check_sell
 
 
 # FIXME: Add money which is in assets on the market
@@ -205,4 +205,5 @@ def run_simulation(fts):
     total_profit, trades_history, buy_log = simulate_trading(
         to_numba_dict(fts.config.as_dict()), history_buy_factors.to_numpy(), bfx_history.to_numpy()
     )
-    return total_profit, trades_history, buy_log
+    sim_result = {"profit": total_profit, "trades": trades_history, "buy_log": buy_log}
+    return sim_result
