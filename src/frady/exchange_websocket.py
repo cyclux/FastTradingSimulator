@@ -203,7 +203,7 @@ class ExchangeWebsocket:
             df_history_update.index.name = "t"
             self.fts.backend.db_add_history(df_history_update)
 
-            if self.fts.trader is not None:
+            if self.fts.trader is not None and self.fts.exchange_api.bfx_api_priv is not None:
                 await self.fts.trader.check_sold_orders()
             if not self.history_sync_patch_running and not self.config.is_simulation and self.fts.trader is not None:
                 await self.fts.trader.update()
