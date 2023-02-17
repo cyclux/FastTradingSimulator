@@ -5,16 +5,25 @@ from frady.utils import calc_fee, convert_symbol_str
 
 
 def check_sell_options(fts, latest_prices=None, timestamp=None):
+    # TODO: Reconsider the "ok_to_sell logic". Maybe adapt/edit price_profit to check if it was already reduced?
+    # Also consider future feature of "dynamic price decay"
     sell_options = []
+    portfolio_performance = {}
     if latest_prices is None:
         df_latest_prices = fts.market_history.get_market_history(latest_candle=True, metrics=["c"], uniform_cols=True)
         timestamp = df_latest_prices.index[0]
         latest_prices = df_latest_prices.to_dict("records")[0]
     open_orders = fts.trader.get_all_open_orders(raw=True)
     for open_order in open_orders:
-        price_current = latest_prices.get(open_order["asset"], 0)
+        symbol = open_order["asset"]
+        price_current = latest_prices.get(symbol, 0)
+        price_buy = open_order["price_buy"]
+        price_profit = open_order["price_profit"]
 
-        current_profit_ratio = price_current / open_order["price_buy"]
+        if np.isnan(price_current):
+            price_current = 0.0
+        current_profit_ratio = price_current / price_buy
+        portfolio_performance[symbol] = np.round(current_profit_ratio, 2)
         time_since_buy = (timestamp - open_order["timestamp_buy"]) / 1000 / 60 // 5
 
         buy_orders_maxed_out = (
@@ -28,23 +37,25 @@ def check_sell_options(fts, latest_prices=None, timestamp=None):
             and buy_orders_maxed_out
         )
         if fts.config.is_simulation:
-            if (price_current >= open_order["price_profit"]) or ok_to_sell:
+            if (price_current >= price_profit) or ok_to_sell:
                 # IF SIMULATION
                 # check plausibility and prevent false logic
                 # profit gets a max plausible threshold
-                if price_current / open_order["price_profit"] > 1.2:
-                    price_current = open_order["price_profit"]
-                sell_option = {"asset": open_order["asset"], "price_sell": price_current}
+                if price_current / price_profit > 1.2:
+                    price_current = price_profit
+                sell_option = {"asset": symbol, "price_sell": price_current}
                 sell_options.append(sell_option)
         else:
             if buy_orders_maxed_out and ok_to_sell:
                 sell_option = {
-                    "asset": open_order["asset"],
+                    "asset": symbol,
                     "price_sell": price_current,
                     "gid": open_order["gid"],
                     "buy_order_id": open_order["buy_order_id"],
                 }
                 sell_options.append(sell_option)
+    if not fts.config.is_simulation:
+        print("[INFO] Current portfolio performance:", portfolio_performance)
 
     return sell_options
 
