@@ -113,7 +113,7 @@ def get_asset_volatility(df_input):
     ).sort_values()
 
 
-def get_asset_buy_performance(fts, history_window=150, timestamp=None):
+def get_asset_buy_performance(fts, history_window=1800, timestamp=None):
     start = -1 * history_window
     end = None
     idx_type = "iloc"
@@ -131,8 +131,13 @@ def get_asset_buy_performance(fts, history_window=150, timestamp=None):
         fill_na=True,
         uniform_cols=True,
     )
-    if len(market_window_pct_change) < history_window:
-        buy_performance = None
-    else:
-        buy_performance = market_window_pct_change.sum()
+    tollerance = 5
+    if len(market_window_pct_change) + tollerance < history_window:
+        difference = history_window - len(market_window_pct_change)
+        print(
+            f"[WARNING] Missing {difference} candle entries to calculate the asset performance with set "
+            + f"'history_window'={history_window // 60 * 5}. "
+            + "Check DB consistency if the number of missing candles grows."
+        )
+    buy_performance = market_window_pct_change.sum()
     return buy_performance
