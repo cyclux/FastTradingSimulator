@@ -28,6 +28,7 @@ Returns:
 import numpy as np
 import numba as nb
 
+from frady.utils import get_timedelta
 from frady.simulator_utils import get_snapshot_indices, calc_metrics, to_numba_dict
 from frady.simulator_buys import check_buy, get_buy_options
 from frady.simulator_sells import check_sell
@@ -158,8 +159,10 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
     # current_idx += window * 300000
 
     snapshot_idx_boundary = df_buy_factors.shape[0]
-    if snapshot_amount == 1 and snapshot_size == -1:
+    if snapshot_amount == 1 and snapshot_size <= 0:
         snapshot_size = snapshot_idx_boundary
+    if snapshot_amount > 1 and snapshot_size <= 0:
+        snapshot_size = snapshot_idx_boundary // snapshot_amount
     snapshot_bounds = get_snapshot_indices(snapshot_idx_boundary, snapshot_amount, snapshot_size)
 
     profit_snapshot_list = np.empty(snapshot_amount, type_float)
@@ -199,10 +202,18 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
 
 
 def run_simulation(fts):
-    bfx_history = fts.market_history.get_market_history(metrics=["o"], fill_na=True)
+    # TODO: provide start and timeframe for simulation
+    sim_start_delta = fts.config.sim_start_delta
+    # sim_timeframe = get_timedelta(fts.config.sim_timeframe)
+    bfx_history = fts.market_history.get_market_history(start=sim_start_delta, metrics=["o"], fill_na=True)
     bfx_history_pct = fts.market_history.get_market_history(
-        metrics=["o"], fill_na=True, pct_change=True, pct_as_factor=False
+        start=sim_start_delta, metrics=["o"], fill_na=True, pct_change=True, pct_as_factor=False
     )
+    history_begin = bfx_history.index[0]
+    history_end = bfx_history.index[-1]
+    history_delta = get_timedelta(history_end - history_begin, unit="ms")["datetime"]
+
+    print(f"[INFO] Starting simulation beginning from {history_begin} to {history_end} | Timeframe: {history_delta}")
     window = int(fts.config.window)
     history_buy_factors = bfx_history_pct.rolling(window=window, step=1, min_periods=1).sum(
         engine="numba", engine_kwargs={"parallel": True, "cache": True}

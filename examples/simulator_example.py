@@ -42,11 +42,13 @@ config = {
         "keep_updated": True,
     },
     "simulation": {
-        "snapshot_size": -1,
-        "snapshot_amount": 1,
+        "sim_start_delta": None,
+        "sim_timeframe": None,
+        "snapshot_size": 0,
+        "snapshot_amount": 10,
     },
 }
 
 assets = []
-sim_result = TradingEngine(config=None, assets=assets).run_sim()
+sim_result = TradingEngine(config=config, assets=assets).run_sim()
 print(sim_result["profit"])

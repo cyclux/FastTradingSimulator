@@ -66,7 +66,7 @@ class Config:
         self.dump_to_feather = config_input.get("dump_to_feather", False)
         self.candle_interval = config_input.get("candle_interval", "5min")
         self.base_currency = config_input.get("base_currency", "USD")
-        self.history_timeframe = config_input.get("history_timeframe", "250h")
+        self.history_timeframe = config_input.get("history_timeframe", "120days")
         self.backend = config_input.get("backend", "mongodb").lower()
         self.backend_host = config_input.get("backend_host", "localhost:1234")
         self.backend_user = config_input.get("backend_user", None)
@@ -99,6 +99,8 @@ class Config:
         self.index_start = config_input.get("index_start", 0)
         self.snapshot_size = config_input.get("snapshot_size", -1)
         self.snapshot_amount = config_input.get("snapshot_amount", 1)
+        self.sim_start_delta = config_input.get("sim_start_delta", None)
+        self.sim_timeframe = config_input.get("sim_timeframe", None)
 
         self.assets_excluded = [
             "UDC",
@@ -116,6 +118,7 @@ class Config:
             "ETHW",
             "SHIB",
             "ETH2X",
+            "SPELL",
         ]
 
     def as_dict(self, for_sim=True):

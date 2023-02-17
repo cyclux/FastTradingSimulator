@@ -36,5 +36,7 @@ market_history:
   keep_updated: True
 
 simulation:
+  sim_start:
+  sim_timeframe:
   snapshot_size: -1
   snapshot_amount: 1
