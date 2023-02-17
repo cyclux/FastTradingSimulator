@@ -9,7 +9,6 @@ docker
 misc
 plots
 profiling
-bitfinex-api-py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
