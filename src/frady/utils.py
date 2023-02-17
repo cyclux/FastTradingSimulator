@@ -42,8 +42,8 @@ def convert_symbol_str(symbol_input, to_exchange, base_currency="USD", with_trad
     return symbol_output
 
 
-def get_timedelta(delta=""):
-    delta_datetime = pd.Timedelta(delta)
+def get_timedelta(delta="", unit=None):
+    delta_datetime = pd.Timedelta(delta, unit=unit)
     delta_timestamp = ns_to_ms(delta_datetime.value)
     return {"datetime": delta_datetime, "timestamp": delta_timestamp}
 
