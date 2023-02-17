@@ -84,7 +84,7 @@ class Config:
         self.buy_opportunity_factor_min = self.buy_opportunity_factor - self.buy_opportunity_boundary
         self.buy_opportunity_factor_max = self.buy_opportunity_factor + self.buy_opportunity_boundary
         self.profit_factor = config_input.get("profit_factor", 0.05)
-        self.profit_ratio_limit = config_input.get("profit_ratio_limit", 0.9)
+        self.profit_ratio_limit = config_input.get("profit_ratio_limit", 1.01)
         self.prefer_performance = config_input.get("prefer_performance", "center")
         self.amount_invest_fiat = config_input.get("amount_invest_fiat", None)
         self.amount_invest_relative = config_input.get("amount_invest_relative", None)
