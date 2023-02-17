@@ -76,7 +76,7 @@ class Config:
         self.creds_path = config_input.get("creds_path", "")
         self.relevant_assets_cap = config_input.get("relevant_assets_cap", 100)
 
-        self.id = config_input.get("id", 1)
+        self.trader_id = config_input.get("id", 1)
         self.window = config_input.get("window", 20) * 60 // 5
         self.budget = float(config_input.get("budget", 0))
         self.buy_opportunity_factor = config_input.get("buy_opportunity_factor", 0.0)
