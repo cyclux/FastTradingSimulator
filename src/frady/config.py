@@ -55,6 +55,7 @@ class Config:
 
         config_input = flatten_dict(config_input)
 
+        self.working_dir = config_input.get("working_dir", None)
         self.update_history = config_input.get("update_history", False)
         self.run_exchange_api = config_input.get("run_exchange_api", False)
         self.keep_updated = config_input.get("keep_updated", False)

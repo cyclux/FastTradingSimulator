@@ -1,5 +1,6 @@
 """_summary_
-pip install numpy pandas pyarrow pymongo bitfinex-api-py websockets tensorflow-probability numexpr Bottleneck numba
+pip install numpy pandas pyarrow pymongo bitfinex-api-py
+websockets tensorflow-probability numexpr Bottleneck numba pyyaml
 """
 from os import getcwd
 import asyncio
@@ -42,7 +43,7 @@ class TradingEngine:
         return market_updater_api
 
     def register_market_history(self):
-        working_dir = getcwd()
+        working_dir = getcwd() if self.config.working_dir is None else self.config.working_dir
         market_history = MarketHistory(fts=self, path_current=working_dir)
         return market_history
 
