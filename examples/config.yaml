@@ -17,7 +17,7 @@ trader:
     prefer_performance: "positive"
     hold_time_limit: 1000
     profit_factor: 1.70
-    profit_ratio_limit: 1
+    profit_ratio_limit: 1.01
     window: 180
 
 market_history:
