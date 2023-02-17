@@ -59,13 +59,12 @@ def fill_nan(nd_array):
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
-def calc_fee(volume, exchange_fee, price_current, currency_type="crypto"):
-    fee_to_pay = volume / 100 * exchange_fee
-    volume_incl_fee = volume - fee_to_pay
-    if currency_type == "crypto":
-        amount_fee_fiat = np.round(fee_to_pay * price_current, 2)
-    if currency_type == "fiat":
-        amount_fee_fiat = fee_to_pay
+def calc_fee(volume, maker_fee, taker_fee, price_current, order_type):
+    volume = abs(volume)
+    exchange_fee = taker_fee if order_type == "buy" else maker_fee
+    amount_fee_crypto = volume / 100 * exchange_fee
+    volume_incl_fee = volume - amount_fee_crypto
+    amount_fee_fiat = np.round(amount_fee_crypto * price_current, 2)
     return volume_incl_fee, amount_fee_fiat
 
 

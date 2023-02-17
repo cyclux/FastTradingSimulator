@@ -206,7 +206,8 @@ class Backend:
                     "buy_opportunity_boundary": self.config.buy_opportunity_boundary,
                     "profit_factor": self.config.profit_factor,
                     "amount_invest_fiat": self.config.amount_invest_fiat,
-                    "exchange_fee": self.config.exchange_fee,
+                    "maker_fee": self.config.maker_fee,
+                    "taker_fee": self.config.taker_fee,
                     "gid": self.fts.trader.gid,
                 }
 

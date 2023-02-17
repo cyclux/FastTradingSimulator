@@ -19,13 +19,14 @@ def sell_asset(
     soldbag,
     price_current,
     amount_invest_fiat,
-    exchange_fee,
+    maker_fee,
+    taker_fee,
     budget,
 ):
 
     amount_invest_crypto = bought_asset_params[6]
     amount_sold_crypto_incl_fee, amount_fee_sell_fiat = calc_fee(
-        amount_invest_crypto, exchange_fee, price_current, currency_type="crypto"
+        amount_invest_crypto, maker_fee, taker_fee, price_current, "sell"
     )
     amount_sold_fiat_incl_fee = np.round(amount_sold_crypto_incl_fee * price_current, 2)
     amount_profit_fiat = amount_sold_fiat_incl_fee - amount_invest_fiat
@@ -64,7 +65,8 @@ def check_sell(
     row_idx,
     df_history_prices,
     amount_invest_fiat,
-    exchange_fee,
+    maker_fee,
+    taker_fee,
     budget,
     asset_buy_limit,
     buy_limit_strategy,
@@ -105,7 +107,8 @@ def check_sell(
                 soldbag,
                 price_current,
                 amount_invest_fiat,
-                exchange_fee,
+                maker_fee,
+                taker_fee,
                 budget,
             )
             budget = soldbag[-1, 8]

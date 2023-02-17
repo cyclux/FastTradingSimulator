@@ -17,10 +17,10 @@ from frady.simulator import run_simulation
 class TradingEngine:
     """_summary_"""
 
-    def __init__(self, user_config, assets=None):
+    def __init__(self, config=None, assets=None):
         print("[INFO] Fast Trading Simulator Beta 0.1.0")
         self.assets_list_symbols = None if assets is None or len(assets) == 0 else assets
-        self.config = self.register_config(user_config)
+        self.config = self.register_config(config)
         self.backend = self.register_backend()
         self.market_history = self.register_market_history()
         self.market_updater_api = self.register_updater()

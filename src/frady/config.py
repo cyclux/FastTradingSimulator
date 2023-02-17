@@ -14,7 +14,8 @@ SIM_RELEVANT_ENTRIES = [
     "profit_factor",
     "budget",
     "amount_invest_fiat",
-    "exchange_fee",
+    "maker_fee",
+    "taker_fee",
     "buy_limit_strategy",
     "hold_time_limit",
     "profit_ratio_limit",
@@ -30,12 +31,30 @@ def load_yaml_config():
     return yaml_config
 
 
+def flatten_dict(input_dict):
+    output_dict = {}
+
+    def flatten(input_dict, key=""):
+        if isinstance(input_dict, dict):
+            for key in input_dict:
+                flatten(input_dict[key], key)
+        else:
+            output_dict[key] = input_dict
+
+    flatten(input_dict)
+    return output_dict
+
+
 class Config:
     """_summary_"""
 
     def __init__(self, config_input):
+        print(f"[INFO] Loading config via {'config.yaml' if config_input is None else 'dict'}")
         if config_input is None:
             config_input = load_yaml_config()
+
+        config_input = flatten_dict(config_input)
+
         self.update_history = config_input.get("update_history", False)
         self.run_exchange_api = config_input.get("run_exchange_api", False)
         self.keep_updated = config_input.get("keep_updated", False)
@@ -56,7 +75,7 @@ class Config:
         self.creds_path = config_input.get("creds_path", "")
         self.relevant_assets_cap = config_input.get("relevant_assets_cap", 100)
 
-        self.trader_id = config_input.get("trader_id", 1)
+        self.id = config_input.get("id", 1)
         self.window = config_input.get("window", 20) * 60 // 5
         self.budget = float(config_input.get("budget", 0))
         self.buy_opportunity_factor = config_input.get("buy_opportunity_factor", 0.0)
@@ -71,7 +90,8 @@ class Config:
         self.max_buy_per_asset = config_input.get("max_buy_per_asset", 1)
         self.hold_time_limit = config_input.get("hold_time_limit", 20000)
         self.buy_limit_strategy = config_input.get("buy_limit_strategy", False)
-        self.exchange_fee = config_input.get("exchange_fee", 0.15)
+        self.maker_fee = config_input.get("maker_fee", 0.10)
+        self.taker_fee = config_input.get("taker_fee", 0.20)
         self.use_backend = config_input.get("use_backend", True)
         self.is_simulation = config_input.get("dry_run", False)
         # Simulator specific

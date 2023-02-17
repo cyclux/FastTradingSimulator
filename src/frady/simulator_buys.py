@@ -28,11 +28,19 @@ def get_buy_options(buy_options_bool, buyfactor_row, buy_opportunity_factor, pre
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
 def buy_asset(
-    buy_option_idx, buyfactor_row, row_idx, price_current, profit_factor, amount_invest_fiat, exchange_fee, budget
+    buy_option_idx,
+    buyfactor_row,
+    row_idx,
+    price_current,
+    profit_factor,
+    amount_invest_fiat,
+    maker_fee,
+    taker_fee,
+    budget,
 ):
     price_profit = price_current * profit_factor
     amount_invest_fiat_incl_fee, amount_fee_buy_fiat = calc_fee(
-        amount_invest_fiat, exchange_fee, price_current, currency_type="fiat"
+        amount_invest_fiat, maker_fee, taker_fee, price_current, "buy"
     )
     amount_invest_crypto_incl_fee = amount_invest_fiat_incl_fee / price_current
     budget -= amount_invest_fiat
@@ -67,7 +75,8 @@ def check_buy(
     buy_opportunity_factor_max,
     profit_factor,
     amount_invest_fiat,
-    exchange_fee,
+    maker_fee,
+    taker_fee,
     budget,
 ):
     for buy_option_idx in list_buy_options:
@@ -95,7 +104,8 @@ def check_buy(
                 price_current,
                 profit_factor,
                 amount_invest_fiat,
-                exchange_fee,
+                maker_fee,
+                taker_fee,
                 budget,
             )
             buybag = np.append(buybag, bought_asset_params, axis=0)

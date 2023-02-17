@@ -60,6 +60,7 @@ async def sell_assets(fts, sell_options):
             closed_order = open_order[0].copy()
             closed_order["price_sell"] = sell_option["price_sell"]
             sell_volume_crypto, _, sell_fee_fiat = calc_fee(
+                fts.config,
                 closed_order["buy_volume_crypto"],
                 closed_order["price_sell"],
                 order_type="sell",
@@ -116,7 +117,7 @@ def sell_confirmed(fts, sell_order):
         closed_order["sell_timestamp"] = sell_order["mts_update"]
         closed_order["price_sell"] = sell_order["price_avg"]
         closed_order["sell_volume_crypto"], _, closed_order["sell_fee_fiat"] = calc_fee(
-            abs(sell_order["amount_orig"]), sell_order["price_avg"], order_type="sell"
+            fts.config, abs(sell_order["amount_orig"]), sell_order["price_avg"], order_type="sell"
         )
         closed_order["sell_volume_fiat"] = float(
             np.round(abs(sell_order["amount_orig"]) * sell_order["price_avg"] - closed_order["sell_fee_fiat"], 2)

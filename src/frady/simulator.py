@@ -61,7 +61,8 @@ def iter_market_history(
     max_buy_per_asset,
     hold_time_limit,
     profit_ratio_limit,
-    exchange_fee,
+    maker_fee,
+    taker_fee,
     current_idx,
     current_iter,
 ):
@@ -78,7 +79,8 @@ def iter_market_history(
             row_idx,
             df_history_prices,
             amount_invest_fiat,
-            exchange_fee,
+            maker_fee,
+            taker_fee,
             budget,
             asset_buy_limit,
             buy_limit_strategy,
@@ -108,7 +110,8 @@ def iter_market_history(
                 buy_opportunity_factor_max,
                 profit_factor,
                 amount_invest_fiat,
-                exchange_fee,
+                maker_fee,
+                taker_fee,
                 budget,
             )
             if buybag.shape[0] > 0:
@@ -133,7 +136,8 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
     profit_factor = sim_params_numba["profit_factor"]
     budget = sim_params_numba["budget"]
     amount_invest_fiat = sim_params_numba["amount_invest_fiat"]
-    exchange_fee = sim_params_numba["exchange_fee"]  # in percent -> maker 0.1 | taker 0.2
+    maker_fee = sim_params_numba["maker_fee"]
+    taker_fee = sim_params_numba["taker_fee"]
     buy_limit_strategy = sim_params_numba["buy_limit_strategy"]
     hold_time_limit = sim_params_numba["hold_time_limit"]
     profit_ratio_limit = sim_params_numba["profit_ratio_limit"]
@@ -180,7 +184,8 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
             max_buy_per_asset,
             hold_time_limit,
             profit_ratio_limit,
-            exchange_fee,
+            maker_fee,
+            taker_fee,
             current_idx + (snapshot_idx * 300000),
             current_iter,
         )
