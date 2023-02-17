@@ -4,7 +4,7 @@
 import numpy as np
 import numba as nb
 import numba.typed as nb_types
-from frady.simulator_utils import calc_fee, array_diff
+from frady.simulator.utils import calc_fee, array_diff
 
 NB_PARALLEL = False
 NB_CACHE = True

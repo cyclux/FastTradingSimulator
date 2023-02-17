@@ -3,7 +3,7 @@
 
 import numpy as np
 import numba as nb
-from frady.simulator_utils import calc_fee
+from frady.simulator.utils import calc_fee
 
 NB_PARALLEL = False
 NB_CACHE = True

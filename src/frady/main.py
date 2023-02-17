@@ -4,15 +4,15 @@ websockets tensorflow-probability numexpr Bottleneck numba pyyaml
 """
 from os import getcwd
 import asyncio
-from frady.utils import connect_api
+from frady import simulator
 from frady.config import Config
-from frady.backend import Backend
-from frady.market_history import MarketHistory
-from frady.market_updater import MarketUpdater
-from frady.exchange_api import ExchangeAPI
-from frady.exchange_websocket import ExchangeWebsocket
+from frady.market.backend import Backend
+from frady.market.history import MarketHistory
+from frady.market.updater import MarketUpdater
+from frady.exchange.api import ExchangeAPI
+from frady.exchange.websocket import ExchangeWebsocket
 from frady.trader import Trader
-from frady.simulator import run_simulation
+from frady.utils import connect_api
 
 
 class TradingEngine:
@@ -98,5 +98,5 @@ class TradingEngine:
 
     def run_sim(self):
         asyncio.run(self.init(is_sim=True))
-        sim_result = run_simulation(fts=self)
+        sim_result = simulator.run(fts=self)
         return sim_result

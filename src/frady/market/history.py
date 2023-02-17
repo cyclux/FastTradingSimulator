@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import pandas as pd
 from frady.utils import ms_to_ns, get_col_names, ns_to_ms, get_time_minus_delta
-from frady.market_metrics import get_init_relevant_assets
+from frady.market.metrics import get_init_relevant_assets
 
 
 def get_pct_change(df_history, as_factor=True):

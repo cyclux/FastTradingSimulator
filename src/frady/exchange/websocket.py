@@ -8,8 +8,8 @@ import traceback
 import pandas as pd
 
 from frady.utils import convert_symbol_str
-from frady.trader_buys import buy_confirmed
-from frady.trader_sells import sell_confirmed
+from frady.trader.buys import buy_confirmed
+from frady.trader.sells import sell_confirmed
 
 
 def check_timestamp_difference(start=None, end=None, freq="5min"):

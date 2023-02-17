@@ -5,8 +5,8 @@ from asyncio import sleep as asyncio_sleep
 import numpy as np
 import pandas as pd
 from frady.utils import convert_symbol_str
-from frady.market_metrics import get_asset_buy_performance
-from frady.trader_sells import submit_sell_order
+from frady.market.metrics import get_asset_buy_performance
+from frady.trader.sells import submit_sell_order
 
 
 def get_significant_digits(num, digits):

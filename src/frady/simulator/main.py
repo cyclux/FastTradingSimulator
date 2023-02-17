@@ -29,9 +29,9 @@ import numpy as np
 import numba as nb
 
 from frady.utils import get_timedelta
-from frady.simulator_utils import get_snapshot_indices, calc_metrics, to_numba_dict
-from frady.simulator_buys import check_buy, get_buy_options
-from frady.simulator_sells import check_sell
+from frady.simulator.utils import get_snapshot_indices, calc_metrics, to_numba_dict
+from frady.simulator.buys import check_buy, get_buy_options
+from frady.simulator.sells import check_sell
 
 
 # FIXME: Add money which is in assets on the market
@@ -205,7 +205,7 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
     return profit_total, soldbag_all_snapshots, buybag
 
 
-def run_simulation(fts):
+def run(fts):
     # TODO: provide start and timeframe for simulation
     sim_start_delta = fts.config.sim_start_delta
     # sim_timeframe = get_timedelta(fts.config.sim_timeframe)
