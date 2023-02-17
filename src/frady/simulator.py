@@ -159,9 +159,13 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
     # current_idx += window * 300000
 
     snapshot_idx_boundary = df_buy_factors.shape[0]
-    if snapshot_amount == 1 and snapshot_size <= 0:
+    if snapshot_size <= 0:
+        snapshot_size = -1
+    if snapshot_amount <= 0:
+        snapshot_amount = 1
+    if snapshot_amount == 1 and snapshot_size == -1:
         snapshot_size = snapshot_idx_boundary
-    if snapshot_amount > 1 and snapshot_size <= 0:
+    if snapshot_amount > 1 and snapshot_size == -1:
         snapshot_size = snapshot_idx_boundary // snapshot_amount
     snapshot_bounds = get_snapshot_indices(snapshot_idx_boundary, snapshot_amount, snapshot_size)
 
