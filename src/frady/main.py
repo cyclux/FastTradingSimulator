@@ -5,6 +5,7 @@ websockets tensorflow-probability numexpr Bottleneck numba pyyaml
 from os import getcwd
 import asyncio
 from frady import simulator
+from frady.simulator import hyperparam_search
 from frady.config import Config
 from frady.market.backend import Backend
 from frady.market.history import MarketHistory
@@ -96,7 +97,10 @@ class TradingEngine:
             self.run_ws_updater(run_in_jupyter=True)
         return self
 
-    def run_sim(self):
+    def run_sim(self, optuna_config=None):
         asyncio.run(self.init(is_sim=True))
-        sim_result = simulator.run(fts=self)
+        if optuna_config is None:
+            sim_result = simulator.run(fts=self)
+        else:
+            sim_result = hyperparam_search.run(self, optuna_config)
         return sim_result

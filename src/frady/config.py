@@ -121,8 +121,8 @@ class Config:
             "SPELL",
         ]
 
-    def as_dict(self, for_sim=True):
-        attr_as_dict = self.__dict__
+    def to_dict(self, for_sim=True):
+        attr_to_dict = self.__dict__
         if for_sim:
-            attr_as_dict = {key: val for (key, val) in attr_as_dict.items() if key in SIM_RELEVANT_ENTRIES}
-        return attr_as_dict
+            attr_to_dict = {key: val for (key, val) in attr_to_dict.items() if key in SIM_RELEVANT_ENTRIES}
+        return attr_to_dict
