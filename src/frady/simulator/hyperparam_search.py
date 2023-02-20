@@ -24,14 +24,18 @@ optuna_pruners = {
     "MedianPruner": optuna.pruners.MedianPruner,
 }
 
-file_path = "./optuna_hyperparameter_search.log"
-lock_obj = optuna.storages.JournalFileOpenLock(file_path)
 
-optuna_storages = {
-    "JournalStorage": optuna.storages.JournalStorage(
-        optuna.storages.JournalFileStorage(file_path, lock_obj=lock_obj),
-    )
-}
+def get_optuna_storage(config_storage):
+    if "sql:" not in str(config_storage):
+        file_path = "./optuna_hyperparameter_search.log"
+        lock_obj = optuna.storages.JournalFileOpenLock(file_path)
+        optuna_storages = {
+            "JournalStorage": optuna.storages.JournalStorage(
+                optuna.storages.JournalFileStorage(file_path, lock_obj=lock_obj),
+            )
+        }
+        config_storage = optuna_storages.get(config_storage, None)
+    return config_storage
 
 
 def run(fts, optuna_config):
@@ -55,7 +59,7 @@ def run(fts, optuna_config):
     study = optuna.create_study(
         study_name=config["study_name"],
         direction=config["direction"],
-        storage=optuna_storages.get(config["storage"], None),
+        storage=get_optuna_storage(config["storage"]),
         load_if_exists=config["load_if_exists"],
         sampler=optuna_samplers.get(config["sampler"], None)(),
         pruner=optuna_pruners.get(config["pruner"], None)(),
