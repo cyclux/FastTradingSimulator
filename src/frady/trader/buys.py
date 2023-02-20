@@ -44,12 +44,14 @@ def check_buy_options(root, latest_prices=None, timestamp=None):
             f"{buy_option['asset']} [perf:{np.round(buy_option['perf'], 2)}, price: {buy_option['price']}]"
             for buy_option in buy_options
         ]
-        print(
-            f"[INFO] {amount_buy_options} potential asset{'s' if len(buy_options) > 1 else ''} to buy:",
-            *buy_options_print,
+        root.log.info(
+            "%s potential asset%s to buy: %s",
+            amount_buy_options,
+            "s" if len(buy_options) > 1 else "",
+            buy_options_print,
         )
     else:
-        print("[INFO] Currently no potential assets to buy.")
+        root.log.info("Currently no potential assets to buy.")
     return buy_options
 
 
@@ -61,7 +63,7 @@ async def buy_assets(root, buy_options):
         asset_symbol = asset["asset"]
         # TODO: Make possible to have multiple orders of same asset
         if asset_symbol in root.config.assets_excluded:
-            print(f"[INFO] Asset on blacklist. Will not buy {asset}")
+            root.log.info("Asset on blacklist. Will not buy %s", asset)
             continue
         asset_open_orders = root.trader.get_open_order(asset=asset)
         if len(asset_open_orders) > 0:
@@ -74,9 +76,11 @@ async def buy_assets(root, buy_options):
 
         min_order_size = root.trader.min_order_sizes.get(asset_symbol, 0)
         if min_order_size > buy_amount_crypto:
-            print(
-                f"[INFO] Adapting buy_amount_crypto ({buy_amount_crypto}) "
-                + f"of {asset_symbol} to min_order_size ({min_order_size})"
+            root.log.info(
+                "Adapting buy_amount_crypto (%s) of %s to min_order_size (%s).",
+                buy_amount_crypto,
+                asset_symbol,
+                min_order_size,
             )
             buy_amount_crypto = min_order_size * 1.02
 
@@ -90,7 +94,7 @@ async def buy_assets(root, buy_options):
             "price": asset["price"],
             "amount": buy_amount_crypto,
         }
-        print("[INFO] Executing buy order:", buy_order)
+        root.log.info("Executing buy order: %s", buy_order)
 
         if root.config.is_simulation:
             new_budget = float(np.round(root.config.budget - root.config.amount_invest_fiat, 2))
@@ -102,23 +106,27 @@ async def buy_assets(root, buy_options):
             root.backend.update_status({"gid": root.trader.gid})
             if not exchange_result_ok:
                 # TODO: Send notification about this event!
-                print(f"[ERROR] Buy order execution failed! -> {buy_order}")
+                root.log.error("Buy order execution failed! -> %s", buy_order)
             if compensate_rate_limit:
                 await asyncio_sleep(0.8)
     amount_assets_out_of_funds = len(assets_out_of_funds_to_buy)
     amount_assets_max_bought = len(assets_max_amount_bought)
     if amount_assets_out_of_funds > 0:
-        print(
-            f"[INFO] {amount_assets_out_of_funds} asset{'s' if amount_assets_out_of_funds > 1 else ''}"
-            + " out of funds to buy "
-            + f"(${np.round(root.config.budget, 2)} < ${root.config.amount_invest_fiat}):",
-            *assets_out_of_funds_to_buy,
+        root.log.info(
+            "%s asset%s out of funds to buy ($%s < $%s): %s",
+            amount_assets_out_of_funds,
+            "s" if amount_assets_out_of_funds > 1 else "",
+            np.round(root.config.budget, 2),
+            root.config.amount_invest_fiat,
+            assets_out_of_funds_to_buy,
         )
     if amount_assets_max_bought > 0:
-        print(
-            f"[INFO] {amount_assets_max_bought} asset{'s' if amount_assets_max_bought > 1 else ''}"
-            + f" {'have' if amount_assets_max_bought > 1 else 'has'} reached max amount to buy:",
-            *assets_max_amount_bought,
+        root.log.info(
+            "%s asset%s %s reached max amount to buy: %s",
+            amount_assets_max_bought,
+            "s" if amount_assets_max_bought > 1 else "",
+            "have" if amount_assets_max_bought > 1 else "has",
+            assets_max_amount_bought,
         )
 
 

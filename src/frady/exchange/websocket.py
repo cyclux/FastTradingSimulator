@@ -4,7 +4,6 @@ Returns:
     _type_: _description_
 """
 
-import traceback
 import pandas as pd
 
 from frady.utils import convert_symbol_str
@@ -12,8 +11,8 @@ from frady.trader.buys import buy_confirmed
 from frady.trader.sells import sell_confirmed
 
 
-def check_timestamp_difference(start=None, end=None, freq="5min"):
-    print(f"[DEBUG] Check delta between DB and WS timestamp of candles: {start} (DB) {end} (WS)")
+def check_timestamp_difference(log, start: int = None, end: int = None, freq: str = "5min") -> pd.DatetimeIndex:
+    log.debug("Check delta between DB and WS timestamp of candles: %s (DB) %s (WS)", start, end)
     diff_range = (
         pd.date_range(
             start=pd.to_datetime(start, unit="ms", utc=True),
@@ -44,10 +43,10 @@ class ExchangeWebsocket:
         _type_: _description_
     """
 
-    def __init__(self, root=None):
+    def __init__(self, root):
         self.root = root
         self.config = root.config
-
+        self.log = root.logging.getLogger(__name__)
         self.bfx_api_priv = root.api["bfx_api_priv"]
         self.bfx_api_pub = root.api["bfx_api_pub"]
 
@@ -95,9 +94,10 @@ class ExchangeWebsocket:
         candles_timestamps = self.ws_candle_cache.keys()
         candle_cache_size = len(self.ws_candle_cache.keys())
         while candle_cache_size > self.candle_cache_cap:
-            print(
-                f"[DEBUG] Deleting {min(candles_timestamps)} from candle cache "
-                + f"(max cap: {self.candle_cache_cap} candles)"
+            self.log.debug(
+                "Deleting %s from candle cache (max cap: %s candles)",
+                min(candles_timestamps),
+                self.candle_cache_cap,
             )
             # delete oldest candle cache entry
             del self.ws_candle_cache[min(candles_timestamps)]
@@ -108,20 +108,19 @@ class ExchangeWebsocket:
     #############################
 
     def ws_error(self, ws_error):
-        print(traceback.format_exc())
-        print(f"[ERROR] ws_error: {ws_error}")
+        self.log.error("ws_error: %s", str(ws_error))
 
     def ws_is_subscribed(self, ws_subscribed):
         symbol = convert_symbol_str(ws_subscribed.symbol, to_exchange=False)
         self.asset_candle_subs[symbol] = ws_subscribed
 
     def ws_unsubscribed(self, ws_unsubscribed):
-        print(f"[INFO] Unsubscribed: {ws_unsubscribed}")
+        self.log.info("Unsubscribed: %s", ws_unsubscribed)
 
     def ws_status(self, ws_status):
         # TODO: Handle if exchange goes down / maintanance
         # Check availability of exchange periodically ?!
-        print(f"[WARNING] {ws_status}")
+        self.log.warning("Exchange status: %s", ws_status)
 
     async def ws_subscribe_candles(self, asset_list):
         asset_list_bfx = convert_symbol_str(
@@ -139,7 +138,7 @@ class ExchangeWebsocket:
                 minus_delta=self.config.history_timeframe
             )
         self.is_set_last_candle_timestamp = False
-        print("[INFO] Subscribing to channels..")
+        self.log.debug("Subscribing to channels..")
         await self.ws_subscribe_candles(self.root.assets_list_symbols)
 
     async def ws_new_candle(self, candle):
@@ -161,19 +160,23 @@ class ExchangeWebsocket:
             if candle_cache_size >= 2:
                 self.is_set_last_candle_timestamp = True
                 self.last_candle_timestamp = max(candles_timestamps)
-                print(f"[DEBUG] last_candle_timestamp set to {self.last_candle_timestamp}")
+                self.log.debug("last_candle_timestamp set to %s", self.last_candle_timestamp)
                 # Check sync of candle history. Patch if neccesary
                 diff_range_candle_timestamps = check_timestamp_difference(
-                    start=self.latest_candle_timestamp, end=self.last_candle_timestamp, freq=self.config.candle_interval
+                    self.log,
+                    start=self.latest_candle_timestamp,
+                    end=self.last_candle_timestamp,
+                    freq=self.config.candle_interval,
                 )
                 if len(diff_range_candle_timestamps) > 0:
                     timestamp_patch_history_start = min(diff_range_candle_timestamps)
                     timestamp_patch_history_end = max(diff_range_candle_timestamps)
                     if timestamp_patch_history_start != timestamp_patch_history_end:
                         self.history_sync_patch_running = True
-                        print(
-                            "[INFO] Patching out of sync history.."
-                            + f" From {timestamp_patch_history_start} to {timestamp_patch_history_end}"
+                        self.log.info(
+                            "Patching out of sync history.. From %s to %s",
+                            timestamp_patch_history_start,
+                            timestamp_patch_history_end,
                         )
                         await self.root.market_history.update(
                             start=timestamp_patch_history_start, end=timestamp_patch_history_end
@@ -187,14 +190,14 @@ class ExchangeWebsocket:
             and self.ws_subs_finished
         ):
             self.prevent_race_condition_list.append(self.current_candle_timestamp)
-            print(
-                "[INFO] Saving last candle into " + f"{self.config.backend} (timestamp: {self.last_candle_timestamp})"
+            self.log.debug(
+                "Saving last candle into %s (timestamp: %s)", self.config.backend, self.last_candle_timestamp
             )
             candle_cache_size = len(self.ws_candle_cache.keys())
             candles_last_timestamp = self.ws_candle_cache.get(self.last_candle_timestamp, {})
             if not candles_last_timestamp:
-                print(
-                    f"[WARNING] Last websocket {self.config.candle_interval[:-2]} timestamp has no data from any asset."
+                self.log.warning(
+                    "Last websocket %s timestamp has no data from any asset.", self.config.candle_interval[:-2]
                 )
                 # TODO: Trigger notification email?
 
@@ -215,15 +218,14 @@ class ExchangeWebsocket:
             # health_check_size = 10
             # check_result = self.check_ws_health(health_check_size)
             # if candle_cache_size >= health_check_size:
-            #     print(f"[INFO] Result WS health check [based on {candle_cache_size} candle timestamps]:")
-            #     print(
-            #         f"Potentionally unhealthy: {check_result['unhealthy']}"
-            #         if len(check_result["unhealthy"]) > 0
-            #         else "All good"
+            #     self.log.info("Result WS health check [based on %s candle timestamps]:", candle_cache_size)
+            #     self.log.warning(
+            #         "Potentionally unhealthy: %s",
+            #         check_result["unhealthy"] if len(check_result["unhealthy"]) > 0 else "All good",
             #     )
             # if len(check_result["not_subscribed"]) > 0:
-            #     print(f"[WARNING] assets not subscribed: {check_result['not_subscribed']}")
-            #     print("[INFO] Trying resub..")
+            #     self.log.warning("assets not subscribed: %s", check_result["not_subscribed"])
+            #     self.log.warning("Trying resub..")
             #     await self.ws_subscribe_candles(check_result["not_subscribed"])
 
     ##############################
@@ -231,7 +233,7 @@ class ExchangeWebsocket:
     ##############################
 
     def ws_priv_order_confirmed(self, ws_confirmed):
-        print("order_confirmed", ws_confirmed)
+        self.log.debug("order_confirmed: %s", str(ws_confirmed))
         order_type = "buy" if ws_confirmed.amount_orig > 0 else "sell"
         if order_type == "sell":
             asset_symbol = convert_symbol_str(
@@ -244,10 +246,10 @@ class ExchangeWebsocket:
                 open_order_edited["sell_order_id"] = ws_confirmed.id
                 self.root.trader.edit_order(open_order_edited, "open_orders")
             else:
-                print(f"[ERROR] Cannot find open order ({buy_order})")
+                self.log.error("Cannot find open order (%s)", str(buy_order))
 
     async def ws_priv_order_closed(self, ws_order_closed):
-        print("order_closed", ws_order_closed)
+        self.log.debug("order_closed: %s", str(ws_order_closed))
         order_closed_and_filled = abs(abs(ws_order_closed.amount_orig) - abs(ws_order_closed.amount_filled)) < 0.0000001
         order_type = "buy" if ws_order_closed.amount_orig > 0 else "sell"
         if order_closed_and_filled:
@@ -258,7 +260,7 @@ class ExchangeWebsocket:
                 sell_confirmed(self.root, order_closed_dict)
 
     async def ws_priv_wallet_snapshot(self, ws_wallet_snapshot):
-        print("wallet_snapshot", ws_wallet_snapshot)
+        self.log.debug("wallet_snapshot: %s", str(ws_wallet_snapshot))
         self.root.trader.set_budget(ws_wallet_snapshot)
         self.root.trader.finalize_trading_config()
         self.root.backend.db_sync_trader_state()

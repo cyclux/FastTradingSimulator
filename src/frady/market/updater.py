@@ -38,9 +38,10 @@ def append_market_history_update(assets_hist_update, assets_candles, symbol_curr
 class MarketUpdater:
     """_summary_"""
 
-    def __init__(self, root=None):
+    def __init__(self, root):
         self.root = root
         self.config = root.config
+        self.log = root.logging.getLogger(__name__)
 
     async def get_timeframe(self, start=None, end=None):
         candle_freq_in_ms = get_timedelta(self.config.candle_interval)["timestamp"]
@@ -85,7 +86,7 @@ class MarketUpdater:
                 market_history_update[symbol] = append_market_history_update(
                     market_history_update, candle_update, symbol
                 )
-                print(f"[INFO] Fetched updated history for {symbol} ({len(candle_update)} candles)")
+                self.log.info("Fetched updated history for %s (%s candles)", symbol, len(candle_update))
 
             time_elapsed_difference = 1 - (process_time() - time_start)
             if time_elapsed_difference > 0:
@@ -94,7 +95,7 @@ class MarketUpdater:
 
     def convert_market_history_to_df(self, history_update, timeframe=None):
         if not history_update:
-            print("[WARNING] No market update, cannot create dataframe")
+            self.log.warning("No market update, cannot create dataframe!")
             return None
         history_df_list = []
         if timeframe is not None:
@@ -130,13 +131,14 @@ class MarketUpdater:
                     market_history_update, timeframe=timeframe["timeframe"]
                 )
             else:
-                print(
-                    f"[INFO] No market update since {pd.to_timedelta(timeframe['ms_until_wait_over'], unit='ms')}. "
-                    + "Maybe exchange down?"
+                self.log.warning(
+                    "No market update since %s. Maybe exchange down?",
+                    str(pd.to_timedelta(timeframe["ms_until_wait_over"], unit="ms")),
                 )
         else:
-            print(
-                f"[INFO] Update request too early. Frequency is {self.config.candle_interval}. "
-                + f"Wait at least {int(abs(timeframe['ms_until_wait_over']) / 1000 // 60)} min for next try."
+            self.log.info(
+                "Update request too early. Frequency is %s. Wait at least %s min for next try.",
+                self.config.candle_interval,
+                int(abs(timeframe["ms_until_wait_over"]) / 1000 // 60),
             )
         return df_market_history_update

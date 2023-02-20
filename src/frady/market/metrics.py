@@ -60,7 +60,7 @@ def get_asset_performance_metrics(df_input):
 
 async def get_init_relevant_assets(root, capped=-1):
     # 34 days ~ 10000 candles limit
-    print("[INFO] Analyzing market for relevant assets..")
+    root.log.info("Analyzing market for relevant assets..")
     init_market_history = await root.market_updater_api.update_market_history(init_timespan="34days")
     df_relevant_assets_metrics = get_asset_performance_metrics(init_market_history).query(
         "amount_candles > 2000 & candle_density < 500"
@@ -68,7 +68,7 @@ async def get_init_relevant_assets(root, capped=-1):
     relevant_asset_symbols = df_relevant_assets_metrics.sort_values("amount_candles", ascending=False).index
     if capped > 0:
         relevant_asset_symbols = relevant_asset_symbols[:capped]
-    print("[INFO] Market analysis finished!")
+    root.log.info("Market analysis finished!")
     return {
         "assets": list(relevant_asset_symbols),
         "metrics": df_relevant_assets_metrics,
@@ -134,10 +134,11 @@ def get_asset_buy_performance(root, history_window=1800, timestamp=None):
     tollerance = 5
     if len(market_window_pct_change) + tollerance < history_window:
         difference = history_window - len(market_window_pct_change)
-        print(
-            f"[WARNING] Missing {difference} candle entries to calculate the asset performance with set "
-            + f"'history_window'={history_window // 60 * 5}. "
-            + "Check DB consistency if the number of missing candles grows."
+        root.log.warning(
+            "Missing %s candle entries to calculate the asset performance with set "
+            + "'history_window'=%s Check DB consistency if the number of missing candles grows.",
+            str(difference),
+            str(history_window // 60 * 5),
         )
     buy_performance = market_window_pct_change.sum()
     return buy_performance

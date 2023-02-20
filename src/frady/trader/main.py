@@ -18,6 +18,7 @@ class Trader:
     def __init__(self, root):
         self.root = root
         self.config = root.config
+        self.log = root.logging.getLogger(__name__)
 
         self.wallets = {}
         self.open_orders = []
@@ -42,8 +43,8 @@ class Trader:
             sys.exit("[ERROR] Either 'amount_invest_fiat' or 'amount_invest_relative' must be set.")
 
         if (self.config.amount_invest_fiat is not None) and (self.config.amount_invest_relative is not None):
-            print(
-                "[INFO] 'amount_invest_fiat' and 'amount_invest_relative' are both set."
+            self.log.info(
+                "'amount_invest_fiat' and 'amount_invest_relative' are both set."
                 + "'amount_invest_fiat' will be overwritten by 'amount_invest_relative' (relative to the budget)."
             )
 
@@ -63,7 +64,7 @@ class Trader:
         if self.config.use_backend:
             db_response = self.root.backend.order_new(order.copy(), order_type)
             if not db_response:
-                print("[ERROR] Backend DB insert failed")
+                self.log.error("Backend DB insert order failed!")
 
     def edit_order(self, order, order_type):
         order_obj = getattr(self, order_type)
@@ -73,7 +74,7 @@ class Trader:
         if self.config.use_backend:
             db_response = self.root.backend.order_edit(order.copy(), order_type)
             if not db_response:
-                print("[ERROR] Backend DB insert failed")
+                self.log.error("Backend DB edit order failed!")
 
     def del_order(self, order, order_type):
         # Delete from internal mirror of DB
@@ -82,7 +83,7 @@ class Trader:
         if self.config.use_backend:
             db_response = self.root.backend.order_del(order.copy(), order_type)
             if not db_response:
-                print("[ERROR] Backend DB delete order failed")
+                self.log.error("Backend DB delete order failed!")
 
     ##################
     # Getting orders #
@@ -154,9 +155,11 @@ class Trader:
             if order["id"] in sell_order_ids and "EXECUTED" in order["order_status"]
         ]
         for sold_order in sold_orders:
-            print(
-                f"[INFO] Sold order of {sold_order['symbol']} (id:{sold_order['id']} gid:{sold_order['gid']}) "
-                + "has been converted to closed order."
+            self.log.info(
+                "Sold order of %s (id:%s gid:%s) has been converted to closed order.",
+                sold_order["symbol"],
+                sold_order["id"],
+                sold_order["gid"],
             )
             sell_confirmed(self.root, sold_order)
 

@@ -55,7 +55,7 @@ def check_sell_options(root, latest_prices=None, timestamp=None):
                 }
                 sell_options.append(sell_option)
     if not root.config.is_simulation:
-        print("[INFO] Current portfolio performance:", portfolio_performance)
+        root.log.info("Current portfolio performance: %s", portfolio_performance)
 
     return sell_options
 
@@ -100,9 +100,11 @@ async def sell_assets(root, sell_options):
             }
             order_result_ok = await root.exchange_api.order("sell", sell_order, update_order=True)
             if order_result_ok:
-                print(
-                    f"[INFO] Sell price of {sell_order['asset']} has been changed "
-                    + f"from {open_order[0]['price_buy']} to {sell_order['price']}."
+                root.log.info(
+                    "Sell price of %s has been changed from %s to %s.",
+                    sell_order["asset"],
+                    open_order[0]["price_buy"],
+                    sell_order["price"],
                 )
 
 
@@ -116,11 +118,11 @@ async def submit_sell_order(root, open_order):
     }
     exchange_result_ok = await root.exchange_api.order("sell", sell_order)
     if not exchange_result_ok:
-        print(f"[ERROR] Sell order execution failed! -> {sell_order}")
+        root.log.error("Sell order execution failed! -> %s", str(sell_order))
 
 
 def sell_confirmed(root, sell_order):
-    print("sell_order confirmed", sell_order)
+    root.log.debug("sell_order confirmed: %s", sell_order)
     asset_symbol = convert_symbol_str(sell_order["symbol"], base_currency=root.config.base_currency, to_exchange=False)
     open_order = root.trader.get_open_order(asset={"asset": asset_symbol, "gid": sell_order["gid"]})
     if len(open_order) > 0:
@@ -137,4 +139,4 @@ def sell_confirmed(root, sell_order):
         root.trader.new_order(closed_order, "closed_orders")
         root.trader.del_order(open_order[0], "open_orders")
     else:
-        print(f"[ERROR] Could not find order to sell: {sell_order}")
+        root.log.error("Could not find order to sell: %s", sell_order)

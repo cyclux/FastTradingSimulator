@@ -205,11 +205,13 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
     return profit_total, soldbag_all_snapshots, buybag
 
 
-def print_sim_details(bfx_history):
+def print_sim_details(root, bfx_history):
     history_begin = bfx_history.index[0]
     history_end = bfx_history.index[-1]
     history_delta = get_timedelta(history_end - history_begin, unit="ms")["datetime"]
-    print(f"[INFO] Starting simulation beginning from {history_begin} to {history_end} | Timeframe: {history_delta}")
+    root.log.info(
+        "Starting simulation beginning from %s to %s | Timeframe: %s", history_begin, history_end, history_delta
+    )
 
 
 def prepare_sim(root):
@@ -223,7 +225,7 @@ def prepare_sim(root):
     history_buy_factors = bfx_history_pct.rolling(window=window, step=1, min_periods=1).sum(
         engine="numba", engine_kwargs={"parallel": True, "cache": True}
     )
-    print_sim_details(bfx_history)
+    print_sim_details(root, bfx_history)
     return bfx_history.to_numpy(), history_buy_factors.to_numpy()
 
 

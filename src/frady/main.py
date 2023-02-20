@@ -2,7 +2,9 @@
 pip install numpy pandas pyarrow pymongo bitfinex-api-py
 websockets tensorflow-probability numexpr Bottleneck numba pyyaml
 """
-from os import getcwd
+
+import os
+import logging
 import asyncio
 from frady import simulator
 from frady.simulator import hyperparam_search
@@ -20,7 +22,9 @@ class TradingEngine:
     """_summary_"""
 
     def __init__(self, config=None, assets=None):
-        print("[INFO] Fast Trading Simulator Beta 0.1.0")
+        self.logging = logging
+        self.log = self.config_logger()
+        self.log.info("Fast Trading Simulator Beta 0.1.0")
         self.assets_list_symbols = None if assets is None or len(assets) == 0 else assets
         self.config = self.register_config(config)
         self.backend = self.register_backend()
@@ -31,8 +35,13 @@ class TradingEngine:
         self.exchange_ws = self.register_exchange_ws()
         self.trader = self.register_trader()
 
+    def config_logger(self):
+        logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"), format="%(asctime)s [%(levelname)s] %(message)s")
+        log = logging.getLogger(__name__)
+        return log
+
     def register_config(self, user_config):
-        config = Config(user_config)
+        config = Config(root=self, config_input=user_config)
         return config
 
     def register_backend(self):
@@ -44,7 +53,7 @@ class TradingEngine:
         return market_updater_api
 
     def register_market_history(self):
-        working_dir = getcwd() if self.config.working_dir is None else self.config.working_dir
+        working_dir = os.getcwd() if self.config.working_dir is None else self.config.working_dir
         market_history = MarketHistory(root=self, path_current=working_dir)
         return market_history
 

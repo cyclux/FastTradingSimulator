@@ -61,10 +61,11 @@ class MarketHistory:
         _type_: _description_
     """
 
-    def __init__(self, root=None, path_current=None, path_history_dumps=None):
+    def __init__(self, root, path_current=None, path_history_dumps=None):
 
         self.root = root
         self.config = root.config
+        self.log = root.logging.getLogger(__name__)
         self.df_market_history = None
 
         # Set paths
@@ -80,7 +81,7 @@ class MarketHistory:
         )
 
     async def load_history(self):
-        print(f"[INFO] Loading history via {self.config.load_history_via}")
+        self.log.info("Loading history via %s", self.config.load_history_via)
         if self.config.load_history_via == "mongodb":
             if self.root.backend.is_collection_new:
                 sys.exit(
@@ -114,9 +115,12 @@ class MarketHistory:
 
                 end_time = get_time_minus_delta(first_local_candle_timestamp, delta=self.config.candle_interval)
                 end = end_time["timestamp"]
-            print(
-                f"[INFO] Fetching {self.config.history_timeframe} ({start} - {end}) of market history "
-                + f"from {len(self.root.assets_list_symbols)} assets"
+            self.log.info(
+                "Fetching %s (%s - %s) of market history from %s assets",
+                self.config.history_timeframe,
+                start,
+                end,
+                len(self.root.assets_list_symbols),
             )
             if start < end:
                 await self.update(start=start, end=end)
@@ -148,19 +152,21 @@ class MarketHistory:
             if start < end:
                 await self.update(start=start, end=end)
             else:
-                print(f"[INFO] Market history is already uptodate ({start})")
+                self.log.info("Market history is already uptodate (%s)", start)
 
         if self.config.check_db_consistency is True:
             self.root.backend.check_db_consistency()
 
         amount_assets = len(self.root.assets_list_symbols)
-        print(f"[INFO] {amount_assets} assets from {self.config.exchange} loaded via {self.config.load_history_via}")
+        self.log.info(
+            "%s assets from %s loaded via %s", amount_assets, self.config.exchange, self.config.load_history_via
+        )
 
         return self.df_market_history
 
     def dump_to_feather(self):
         self.df_market_history.reset_index(drop=False).to_feather(self.path_feather / self.feather_filename)
-        print(f"[INFO] Assets dumped via feather to: {self.path_feather / self.feather_filename}")
+        self.log.info("Assets dumped via feather to: %s", str(self.path_feather / self.feather_filename))
 
     def get_market_history(
         self,
@@ -231,7 +237,7 @@ class MarketHistory:
             timestamp_intervals = get_timestamp_intervals(start, end)
             df_history_update_list = []
             for interval in timestamp_intervals:
-                print(f"[INFO] Fetching history interval: {interval}")
+                self.log.info("Fetching history interval: %s", interval)
                 i_start = interval[0]
                 i_end = interval[1]
                 df_history_update_interval = await self.root.market_updater_api.update_market_history(

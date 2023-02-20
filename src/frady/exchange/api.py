@@ -16,10 +16,10 @@ class ExchangeAPI:
         _type_: _description_
     """
 
-    def __init__(self, root=None):
+    def __init__(self, root):
         self.root = root
         self.config = root.config
-
+        self.log = root.logging.getLogger(__name__)
         self.bfx_api_priv = root.api["bfx_api_priv"]
         self.bfx_api_pub = root.api["bfx_api_pub"]
 
@@ -131,9 +131,9 @@ class ExchangeAPI:
                     gid=order_payload["gid"],
                 )
             exchange_result = exchange_response.is_success()
-        # Cannot specify Exception as bfx API does not provide more
+        # Cannot specify Exception as bfx API does not
         except Exception as exc:  # pylint: disable=broad-except
-            print(exc)
+            self.log.exception(exc)
         return exchange_result
 
     async def get_order_history(self, raw=False):

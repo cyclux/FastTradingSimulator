@@ -30,10 +30,11 @@ class Backend:
         _type_: _description_
     """
 
-    def __init__(self, root=None):
+    def __init__(self, root):
 
         self.root = root
         self.config = root.config
+        self.log = root.logging.getLogger(__name__)
         self.sync_check_needed = False
         self.is_collection_new = True
         self.is_filled_na = False
@@ -64,13 +65,13 @@ class Backend:
                 self.mongo_exchange_coll = self.backend_db[self.config.mongo_collection]
                 backend_client.start_session()
             except (AutoReconnect, ConnectionFailure) as exc:
-                print(
-                    f"[ERROR] Failed connecting to MongoDB ({self.config.backend_host})."
-                    + "Is the MongoDB instance running and reachable?"
+                self.log.error(
+                    "Failed connecting to MongoDB (%s). Is the MongoDB instance running and reachable?",
+                    self.config.backend_host,
                 )
-                print(exc)
+                self.log.exception(exc)
             else:
-                print(f"[INFO] Successfully connected to MongoDB backend ({self.config.backend_host})")
+                self.log.info("Successfully connected to MongoDB backend (%s)", self.config.backend_host)
 
             try:
                 self.backend_db.validate_collection(self.mongo_exchange_coll)
@@ -112,9 +113,11 @@ class Backend:
             self.root.market_history.df_market_history = pd.concat(
                 [self.root.market_history.df_market_history, df_external_db_entries]
             ).sort_values("t")
-            print(
-                f"[INFO] {len(only_exist_in_external_db)} candles synced from external to internal DB "
-                + f"({min(only_exist_in_external_db)} to {max(only_exist_in_external_db)})"
+            self.log.info(
+                "%s candles synced from external to internal DB (%s to %s)",
+                len(only_exist_in_external_db),
+                min(only_exist_in_external_db),
+                max(only_exist_in_external_db),
             )
 
         if sync_from_internal_db_needed:
@@ -123,12 +126,14 @@ class Backend:
                 drop_dict_na_values(record) for record in internal_db_entries.reset_index(drop=False).to_dict("records")
             ]
             self.mongodb_insert(internal_db_entries_to_sync)
-            print(
-                f"[INFO] {len(only_exist_in_internal_db)} candles synced from internal to external DB "
-                + f"({min(only_exist_in_internal_db)} to {max(only_exist_in_internal_db)})"
+            self.log.info(
+                "%s candles synced from internal to external DB (%s to %s)",
+                len(only_exist_in_internal_db),
+                min(only_exist_in_internal_db),
+                max(only_exist_in_internal_db),
             )
 
-        print("[INFO] Internal and external DB synced.")
+        self.log.info("Internal and external DB are synced.")
         if self.config.load_history_via == "feather" and sync_from_external_db_needed:
             self.root.market_history.dump_to_feather()
 
@@ -143,11 +148,11 @@ class Backend:
         current_index = index.to_list()
         index_diff = np.setdiff1d(real_index, current_index)
         if len(index_diff) > 0:
-            print(f"[WARNING] Inconsistent asset history. Missing candle timestamps: {index_diff}")
+            self.log.warning("Inconsistent asset history. Missing candle timestamps: %s", str(index_diff))
             # TODO: fetch index_diff from remote
         else:
             is_consistent = True
-            print("[INFO] Consistency check of DB history successful!")
+            self.log.info("Consistency check of DB history successful!")
         return is_consistent
 
     ################
@@ -237,7 +242,7 @@ class Backend:
             insert_result = insert_result.acknowledged
         except (TypeError, ConfigurationError):
             insert_result = False
-            print("[ERROR] Insert into DB failed!")
+            self.log.error("Insert into DB failed!")
         return insert_result
 
     def mongodb_update(self, payload_update, upsert=False, filter_nan=False):
@@ -252,7 +257,7 @@ class Backend:
             )
             update_result = update_result.acknowledged
         except (TypeError, ValueError):
-            print("[ERROR] Update into DB failed!")
+            self.log.error("Update into DB failed!")
             update_result = False
         return update_result
 

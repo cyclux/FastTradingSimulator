@@ -48,8 +48,11 @@ def flatten_dict(input_dict):
 class Config:
     """_summary_"""
 
-    def __init__(self, config_input):
-        print(f"[INFO] Loading config via {'config.yaml' if config_input is None else 'dict'}")
+    def __init__(self, root, config_input):
+        self.log = root.logging.getLogger(__name__)
+        config_type = "config.yaml" if config_input is None else "dict"
+        self.log.info("Loading config via %s", config_type)
+
         if config_input is None:
             config_input = load_yaml_config()
 
