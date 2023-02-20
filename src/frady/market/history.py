@@ -61,10 +61,10 @@ class MarketHistory:
         _type_: _description_
     """
 
-    def __init__(self, fts=None, path_current=None, path_history_dumps=None):
+    def __init__(self, root=None, path_current=None, path_history_dumps=None):
 
-        self.fts = fts
-        self.config = fts.config
+        self.root = root
+        self.config = root.config
         self.df_market_history = None
 
         # Set paths
@@ -82,12 +82,12 @@ class MarketHistory:
     async def load_history(self):
         print(f"[INFO] Loading history via {self.config.load_history_via}")
         if self.config.load_history_via == "mongodb":
-            if self.fts.backend.is_collection_new:
+            if self.root.backend.is_collection_new:
                 sys.exit(
                     f"[ERROR] MongoDB collection '{self.config.mongo_collection}' does not exist. "
                     + "Choose correct collection or get initial market history via 'API' or local storage 'feather'."
                 )
-            cursor = self.fts.backend.mongo_exchange_coll.find({}, sort=[("t", 1)], projection={"_id": False})
+            cursor = self.root.backend.mongo_exchange_coll.find({}, sort=[("t", 1)], projection={"_id": False})
             self.df_market_history = pd.DataFrame(list(cursor))
 
         elif self.config.load_history_via == "feather":
@@ -96,12 +96,12 @@ class MarketHistory:
             self.df_market_history.sort_index(inplace=True)
 
         elif self.config.load_history_via == "api":
-            if self.fts.assets_list_symbols is not None:
-                end = await self.fts.exchange_api.get_latest_remote_candle_timestamp()
+            if self.root.assets_list_symbols is not None:
+                end = await self.root.exchange_api.get_latest_remote_candle_timestamp()
                 start = get_time_minus_delta(end, delta=self.config.history_timeframe)["timestamp"]
             else:
-                relevant_assets = await get_init_relevant_assets(self.fts, capped=self.config.relevant_assets_cap)
-                self.fts.assets_list_symbols = relevant_assets["assets"]
+                relevant_assets = await get_init_relevant_assets(self.root, capped=self.config.relevant_assets_cap)
+                self.root.assets_list_symbols = relevant_assets["assets"]
                 filtered_assets = [
                     f"{asset}_{metric}" for asset in relevant_assets["assets"] for metric in ["o", "h", "l", "c", "v"]
                 ]
@@ -116,7 +116,7 @@ class MarketHistory:
                 end = end_time["timestamp"]
             print(
                 f"[INFO] Fetching {self.config.history_timeframe} ({start} - {end}) of market history "
-                + f"from {len(self.fts.assets_list_symbols)} assets"
+                + f"from {len(self.root.assets_list_symbols)} assets"
             )
             if start < end:
                 await self.update(start=start, end=end)
@@ -136,24 +136,24 @@ class MarketHistory:
             if self.config.dump_to_feather is True:
                 self.dump_to_feather()
 
-        if self.fts.assets_list_symbols is None:
+        if self.root.assets_list_symbols is None:
             self.get_asset_symbols(updated=True)
 
-        if self.fts.backend.sync_check_needed:
-            self.fts.backend.db_sync_check()
+        if self.root.backend.sync_check_needed:
+            self.root.backend.db_sync_check()
 
         if self.config.update_history is True:
             start = self.get_local_candle_timestamp(position="latest", offset=1)
-            end = await self.fts.exchange_api.get_latest_remote_candle_timestamp()
+            end = await self.root.exchange_api.get_latest_remote_candle_timestamp()
             if start < end:
                 await self.update(start=start, end=end)
             else:
                 print(f"[INFO] Market history is already uptodate ({start})")
 
         if self.config.check_db_consistency is True:
-            self.fts.backend.check_db_consistency()
+            self.root.backend.check_db_consistency()
 
-        amount_assets = len(self.fts.assets_list_symbols)
+        amount_assets = len(self.root.assets_list_symbols)
         print(f"[INFO] {amount_assets} assets from {self.config.exchange} loaded via {self.config.load_history_via}")
 
         return self.df_market_history
@@ -204,9 +204,9 @@ class MarketHistory:
         # Contruct list of columns to filter
         assets_to_filter = [f"{asset}_{metric}" for asset in assets for metric in metrics]
         self.df_market_history.sort_index(inplace=True)
-        if fill_na and not self.fts.backend.is_filled_na:
+        if fill_na and not self.root.backend.is_filled_na:
             df_fill_na(self.df_market_history)
-            self.fts.backend.is_filled_na = True
+            self.root.backend.is_filled_na = True
 
         if idx_type == "loc":
             df_market_history = self.df_market_history.loc[start:end, assets_to_filter]
@@ -234,7 +234,7 @@ class MarketHistory:
                 print(f"[INFO] Fetching history interval: {interval}")
                 i_start = interval[0]
                 i_end = interval[1]
-                df_history_update_interval = await self.fts.market_updater_api.update_market_history(
+                df_history_update_interval = await self.root.market_updater_api.update_market_history(
                     start=i_start, end=i_end
                 )
                 if df_history_update_interval is None:
@@ -242,7 +242,7 @@ class MarketHistory:
                 df_history_update_list.append(df_history_update_interval)
             df_history_update = pd.concat(df_history_update_list, axis=0)
             df_history_update = df_history_update.iloc[~df_history_update.index.duplicated()]
-        self.fts.backend.db_add_history(df_history_update)
+        self.root.backend.db_add_history(df_history_update)
         return assets_status
 
     ###########
@@ -255,17 +255,17 @@ class MarketHistory:
             list: str
         """
         if updated:
-            self.fts.assets_list_symbols = get_col_names(self.df_market_history.columns)
-        return self.fts.assets_list_symbols
+            self.root.assets_list_symbols = get_col_names(self.df_market_history.columns)
+        return self.root.assets_list_symbols
 
     def get_local_candle_timestamp(self, position="latest", skip=0, offset=0):
         idx = (-1 - skip) if position == "latest" else (0 + skip)
         latest_candle_timestamp = 0
         if self.df_market_history is not None:
             latest_candle_timestamp = int(self.df_market_history.index[idx])
-        elif self.config.backend == "mongodb" and not self.fts.backend.is_collection_new:
+        elif self.config.backend == "mongodb" and not self.root.backend.is_collection_new:
             sort_id = -1 if position == "latest" else 1
-            cursor = self.fts.backend.mongo_exchange_coll.find({}, sort=[("t", sort_id)], skip=skip, limit=1)
+            cursor = self.root.backend.mongo_exchange_coll.find({}, sort=[("t", sort_id)], skip=skip, limit=1)
             latest_candle_timestamp = int(cursor[0]["t"])
 
         latest_candle_timestamp += offset * 300000

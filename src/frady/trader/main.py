@@ -15,9 +15,9 @@ from frady.trader.sells import check_sell_options, sell_assets, sell_confirmed
 class Trader:
     """_summary_"""
 
-    def __init__(self, fts):
-        self.fts = fts
-        self.config = fts.config
+    def __init__(self, root):
+        self.root = root
+        self.config = root.config
 
         self.wallets = {}
         self.open_orders = []
@@ -31,7 +31,7 @@ class Trader:
         # In case an API connection is used, db_sync_trader_state()
         # will be called once by exchange_ws -> ws_priv_wallet_snapshot()
         if self.config.use_backend and not self.config.run_exchange_api:
-            self.fts.backend.db_sync_trader_state()
+            self.root.backend.db_sync_trader_state()
 
     ##################
     # Initial checks #
@@ -61,7 +61,7 @@ class Trader:
         order_obj = getattr(self, order_type)
         order_obj.append(order)
         if self.config.use_backend:
-            db_response = self.fts.backend.order_new(order.copy(), order_type)
+            db_response = self.root.backend.order_new(order.copy(), order_type)
             if not db_response:
                 print("[ERROR] Backend DB insert failed")
 
@@ -71,7 +71,7 @@ class Trader:
         order_obj.append(order)
 
         if self.config.use_backend:
-            db_response = self.fts.backend.order_edit(order.copy(), order_type)
+            db_response = self.root.backend.order_edit(order.copy(), order_type)
             if not db_response:
                 print("[ERROR] Backend DB insert failed")
 
@@ -80,7 +80,7 @@ class Trader:
         order_obj = getattr(self, order_type)
         order_obj[:] = [o for o in order_obj if o.get("asset") != order["asset"]]
         if self.config.use_backend:
-            db_response = self.fts.backend.order_del(order.copy(), order_type)
+            db_response = self.root.backend.order_del(order.copy(), order_type)
             if not db_response:
                 print("[ERROR] Backend DB delete order failed")
 
@@ -138,15 +138,15 @@ class Trader:
     #############################
 
     async def update(self, latest_prices=None, timestamp=None):
-        sell_options = check_sell_options(self.fts, latest_prices, timestamp)
+        sell_options = check_sell_options(self.root, latest_prices, timestamp)
         if len(sell_options) > 0:
-            await sell_assets(self.fts, sell_options)
-        buy_options = check_buy_options(self.fts, latest_prices, timestamp)
+            await sell_assets(self.root, sell_options)
+        buy_options = check_buy_options(self.root, latest_prices, timestamp)
         if len(buy_options) > 0:
-            await buy_assets(self.fts, buy_options)
+            await buy_assets(self.root, buy_options)
 
     async def check_sold_orders(self):
-        exchange_order_history = await self.fts.exchange_api.get_order_history()
+        exchange_order_history = await self.root.exchange_api.get_order_history()
         sell_order_ids = self.get_all_open_orders()["sell_order_id"].to_list()
         sold_orders = [
             order
@@ -158,7 +158,7 @@ class Trader:
                 f"[INFO] Sold order of {sold_order['symbol']} (id:{sold_order['id']} gid:{sold_order['gid']}) "
                 + "has been converted to closed order."
             )
-            sell_confirmed(self.fts, sold_order)
+            sell_confirmed(self.root, sold_order)
 
     def set_budget(self, ws_wallet_snapshot):
         for wallet in ws_wallet_snapshot:
@@ -166,11 +166,11 @@ class Trader:
                 is_snapshot = wallet.balance_available is None
                 base_currency_balance = wallet.balance if is_snapshot else wallet.balance_available
                 self.config.budget = base_currency_balance
-                self.fts.backend.update_status({"budget": base_currency_balance})
+                self.root.backend.update_status({"budget": base_currency_balance})
 
     def get_profit(self):
         profit_fiat = np.round(sum(order["profit_fiat"] for order in self.closed_orders), 2)
         return profit_fiat
 
     async def get_min_order_sizes(self):
-        self.min_order_sizes = await self.fts.exchange_api.get_min_order_sizes()
+        self.min_order_sizes = await self.root.exchange_api.get_min_order_sizes()

@@ -38,13 +38,13 @@ def get_optuna_storage(config_storage):
     return config_storage
 
 
-def run(fts, optuna_config):
-    bfx_history, history_buy_factors = simulator.prepare_sim(fts)
+def run(root, optuna_config):
+    bfx_history, history_buy_factors = simulator.prepare_sim(root)
     config = optuna_config["config"]
     params = optuna_config["params"]
 
     def objective(trial):
-        sim_params = fts.config.to_dict()
+        sim_params = root.config.to_dict()
         for param, val in params.items():
             param_type = determine_param_type(val)
             if param_type == "int":
@@ -53,7 +53,7 @@ def run(fts, optuna_config):
                 sim_params[param] = trial.suggest_float(param, val["min"], val["max"], step=val["step"])
 
         sim_params_numba = to_numba_dict(sim_params)
-        sim_result = simulator.run(fts, bfx_history, history_buy_factors, sim_params_numba)
+        sim_result = simulator.run(root, bfx_history, history_buy_factors, sim_params_numba)
         return sim_result["profit"]
 
     study = optuna.create_study(

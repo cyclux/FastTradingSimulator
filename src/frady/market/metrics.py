@@ -58,10 +58,10 @@ def get_asset_performance_metrics(df_input):
     return asset_metrics
 
 
-async def get_init_relevant_assets(fts, capped=-1):
+async def get_init_relevant_assets(root, capped=-1):
     # 34 days ~ 10000 candles limit
     print("[INFO] Analyzing market for relevant assets..")
-    init_market_history = await fts.market_updater_api.update_market_history(init_timespan="34days")
+    init_market_history = await root.market_updater_api.update_market_history(init_timespan="34days")
     df_relevant_assets_metrics = get_asset_performance_metrics(init_market_history).query(
         "amount_candles > 2000 & candle_density < 500"
     )
@@ -113,7 +113,7 @@ def get_asset_volatility(df_input):
     ).sort_values()
 
 
-def get_asset_buy_performance(fts, history_window=1800, timestamp=None):
+def get_asset_buy_performance(root, history_window=1800, timestamp=None):
     start = -1 * history_window
     end = None
     idx_type = "iloc"
@@ -121,7 +121,7 @@ def get_asset_buy_performance(fts, history_window=1800, timestamp=None):
         idx_type = "loc"
         start = timestamp - (history_window * 300000)
         end = timestamp
-    market_window_pct_change = fts.market_history.get_market_history(
+    market_window_pct_change = root.market_history.get_market_history(
         start=start,
         end=end,
         idx_type=idx_type,

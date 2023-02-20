@@ -16,12 +16,12 @@ class ExchangeAPI:
         _type_: _description_
     """
 
-    def __init__(self, fts=None):
-        self.fts = fts
-        self.config = fts.config
+    def __init__(self, root=None):
+        self.root = root
+        self.config = root.config
 
-        self.bfx_api_priv = fts.api["bfx_api_priv"]
-        self.bfx_api_pub = fts.api["bfx_api_pub"]
+        self.bfx_api_priv = root.api["bfx_api_priv"]
+        self.bfx_api_pub = root.api["bfx_api_pub"]
 
     #####################
     # REST API - Public #
@@ -91,7 +91,7 @@ class ExchangeAPI:
 
     async def get_min_order_sizes(self):
         bfx_asset_infos = await self.bfx_api_pub.rest.fetch("conf/", params="pub:info:pair")
-        asset_symbols = self.fts.market_history.get_asset_symbols()
+        asset_symbols = self.root.market_history.get_asset_symbols()
         all_asset_symbols = convert_symbol_str(
             asset_symbols, base_currency="USD", with_trade_prefix=False, to_exchange=True
         )

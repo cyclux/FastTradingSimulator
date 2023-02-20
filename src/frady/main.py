@@ -36,16 +36,16 @@ class TradingEngine:
         return config
 
     def register_backend(self):
-        backend = Backend(fts=self)
+        backend = Backend(root=self)
         return backend
 
     def register_updater(self):
-        market_updater_api = MarketUpdater(fts=self)
+        market_updater_api = MarketUpdater(root=self)
         return market_updater_api
 
     def register_market_history(self):
         working_dir = getcwd() if self.config.working_dir is None else self.config.working_dir
-        market_history = MarketHistory(fts=self, path_current=working_dir)
+        market_history = MarketHistory(root=self, path_current=working_dir)
         return market_history
 
     def connect_api(self):
@@ -55,16 +55,16 @@ class TradingEngine:
         return api
 
     def register_exchange_api(self):
-        exchange_api = ExchangeAPI(fts=self)
+        exchange_api = ExchangeAPI(root=self)
         return exchange_api
 
     def register_exchange_ws(self):
-        exchange_ws = ExchangeWebsocket(fts=self)
+        exchange_ws = ExchangeWebsocket(root=self)
         return exchange_ws
 
     def register_trader(self):
         if self.config.run_exchange_api:
-            trader = Trader(fts=self)
+            trader = Trader(root=self)
         else:
             trader = None
         return trader
@@ -100,7 +100,7 @@ class TradingEngine:
     def run_sim(self, optuna_config=None):
         asyncio.run(self.init(is_sim=True))
         if optuna_config is None:
-            sim_result = simulator.run(fts=self)
+            sim_result = simulator.run(self)
         else:
             sim_result = hyperparam_search.run(self, optuna_config)
         return sim_result

@@ -212,12 +212,12 @@ def print_sim_details(bfx_history):
     print(f"[INFO] Starting simulation beginning from {history_begin} to {history_end} | Timeframe: {history_delta}")
 
 
-def prepare_sim(fts):
+def prepare_sim(root):
     # TODO: provide start and timeframe for simulation
-    window = int(fts.config.window)
-    sim_start_delta = fts.config.sim_start_delta
-    bfx_history = fts.market_history.get_market_history(start=sim_start_delta, metrics=["o"], fill_na=True)
-    bfx_history_pct = fts.market_history.get_market_history(
+    window = int(root.config.window)
+    sim_start_delta = root.config.sim_start_delta
+    bfx_history = root.market_history.get_market_history(start=sim_start_delta, metrics=["o"], fill_na=True)
+    bfx_history_pct = root.market_history.get_market_history(
         start=sim_start_delta, metrics=["o"], fill_na=True, pct_change=True, pct_as_factor=False
     )
     history_buy_factors = bfx_history_pct.rolling(window=window, step=1, min_periods=1).sum(
@@ -227,11 +227,11 @@ def prepare_sim(fts):
     return bfx_history.to_numpy(), history_buy_factors.to_numpy()
 
 
-def run(fts, bfx_history=None, history_buy_factors=None, sim_config=None):
+def run(root, bfx_history=None, history_buy_factors=None, sim_config=None):
     if bfx_history is None:
-        bfx_history, history_buy_factors = prepare_sim(fts)
+        bfx_history, history_buy_factors = prepare_sim(root)
     if sim_config is None:
-        sim_config = to_numba_dict(fts.config.to_dict())
+        sim_config = to_numba_dict(root.config.to_dict())
 
     total_profit, trades_history, buy_log = simulate_trading(sim_config, history_buy_factors, bfx_history)
     sim_result = {"profit": total_profit, "trades": trades_history, "buy_log": buy_log}

@@ -44,12 +44,12 @@ class ExchangeWebsocket:
         _type_: _description_
     """
 
-    def __init__(self, fts=None):
-        self.fts = fts
-        self.config = fts.config
+    def __init__(self, root=None):
+        self.root = root
+        self.config = root.config
 
-        self.bfx_api_priv = fts.api["bfx_api_priv"]
-        self.bfx_api_pub = fts.api["bfx_api_pub"]
+        self.bfx_api_priv = root.api["bfx_api_priv"]
+        self.bfx_api_pub = root.api["bfx_api_pub"]
 
         self.ws_candle_cache = {}
         self.candle_cache_cap = 20
@@ -133,14 +133,14 @@ class ExchangeWebsocket:
         self.ws_subs_finished = True
 
     async def ws_init_connection(self):
-        self.latest_candle_timestamp = self.fts.market_history.get_local_candle_timestamp(position="latest")
+        self.latest_candle_timestamp = self.root.market_history.get_local_candle_timestamp(position="latest")
         if self.latest_candle_timestamp == 0:
-            self.latest_candle_timestamp = await self.fts.exchange_api.get_latest_remote_candle_timestamp(
+            self.latest_candle_timestamp = await self.root.exchange_api.get_latest_remote_candle_timestamp(
                 minus_delta=self.config.history_timeframe
             )
         self.is_set_last_candle_timestamp = False
         print("[INFO] Subscribing to channels..")
-        await self.ws_subscribe_candles(self.fts.assets_list_symbols)
+        await self.ws_subscribe_candles(self.root.assets_list_symbols)
 
     async def ws_new_candle(self, candle):
         self.current_candle_timestamp = int(candle["mts"])
@@ -175,7 +175,7 @@ class ExchangeWebsocket:
                             "[INFO] Patching out of sync history.."
                             + f" From {timestamp_patch_history_start} to {timestamp_patch_history_end}"
                         )
-                        await self.fts.market_history.update(
+                        await self.root.market_history.update(
                             start=timestamp_patch_history_start, end=timestamp_patch_history_end
                         )
                         self.history_sync_patch_running = False
@@ -201,12 +201,12 @@ class ExchangeWebsocket:
             df_history_update = pd.DataFrame(candles_last_timestamp, index=[self.last_candle_timestamp])
             self.last_candle_timestamp = self.current_candle_timestamp
             df_history_update.index.name = "t"
-            self.fts.backend.db_add_history(df_history_update)
+            self.root.backend.db_add_history(df_history_update)
 
-            if self.fts.trader is not None and self.fts.exchange_api.bfx_api_priv is not None:
-                await self.fts.trader.check_sold_orders()
-            if not self.history_sync_patch_running and not self.config.is_simulation and self.fts.trader is not None:
-                await self.fts.trader.update()
+            if self.root.trader is not None and self.root.exchange_api.bfx_api_priv is not None:
+                await self.root.trader.check_sold_orders()
+            if not self.history_sync_patch_running and not self.config.is_simulation and self.root.trader is not None:
+                await self.root.trader.update()
 
             self.prune_candle_cache()
             self.prune_race_condition_prevention_cache()
@@ -238,11 +238,11 @@ class ExchangeWebsocket:
                 ws_confirmed.symbol, base_currency=self.config.base_currency, to_exchange=False
             )
             buy_order = {"asset": asset_symbol, "gid": ws_confirmed.gid}
-            open_order = self.fts.trader.get_open_order(asset=buy_order)
+            open_order = self.root.trader.get_open_order(asset=buy_order)
             if len(open_order) > 0:
                 open_order_edited = open_order[0]
                 open_order_edited["sell_order_id"] = ws_confirmed.id
-                self.fts.trader.edit_order(open_order_edited, "open_orders")
+                self.root.trader.edit_order(open_order_edited, "open_orders")
             else:
                 print(f"[ERROR] Cannot find open order ({buy_order})")
 
@@ -252,23 +252,23 @@ class ExchangeWebsocket:
         order_type = "buy" if ws_order_closed.amount_orig > 0 else "sell"
         if order_closed_and_filled:
             if order_type == "buy":
-                await buy_confirmed(self.fts, ws_order_closed)
+                await buy_confirmed(self.root, ws_order_closed)
             if order_type == "sell":
                 order_closed_dict = convert_order_to_dict(ws_order_closed)
-                sell_confirmed(self.fts, order_closed_dict)
+                sell_confirmed(self.root, order_closed_dict)
 
     async def ws_priv_wallet_snapshot(self, ws_wallet_snapshot):
         print("wallet_snapshot", ws_wallet_snapshot)
-        self.fts.trader.set_budget(ws_wallet_snapshot)
-        self.fts.trader.finalize_trading_config()
-        self.fts.backend.db_sync_trader_state()
-        await self.fts.trader.get_min_order_sizes()
+        self.root.trader.set_budget(ws_wallet_snapshot)
+        self.root.trader.finalize_trading_config()
+        self.root.backend.db_sync_trader_state()
+        await self.root.trader.get_min_order_sizes()
 
     def ws_priv_wallet_update(self, ws_wallet_update):
         if ws_wallet_update.currency == self.config.base_currency:
-            self.fts.trader.set_budget([ws_wallet_update])
+            self.root.trader.set_budget([ws_wallet_update])
         else:
-            self.fts.trader.wallets[ws_wallet_update.currency] = ws_wallet_update
+            self.root.trader.wallets[ws_wallet_update.currency] = ws_wallet_update
 
     # def check_ws_health(self, health_check_size=10):
     #     health_check_size *= -1
@@ -285,7 +285,7 @@ class ExchangeWebsocket:
     #     # if no candle was received within health_check_size the asset is considered "unhealthty"
     #     # if at least one candle was received, the asset is considered "healthy"
     #     healthy_assets_list = list(healthy_assets.keys())
-    #     unhealthy_assets = np.setdiff1d(self.fts.assets_list_symbols, healthy_assets_list)
+    #     unhealthy_assets = np.setdiff1d(self.root.assets_list_symbols, healthy_assets_list)
     #     not_subscribed_anymore = []
 
     #     # check if still subscribed
