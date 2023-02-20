@@ -210,6 +210,8 @@ class ExchangeWebsocket:
                 await self.root.trader.check_sold_orders()
             if not self.history_sync_patch_running and not self.config.is_simulation and self.root.trader is not None:
                 await self.root.trader.update()
+                current_total_profit = self.root.trader.get_profit()
+                self.log.info("Current total profit: $%s", current_total_profit)
 
             self.prune_candle_cache()
             self.prune_race_condition_prevention_cache()
