@@ -96,9 +96,15 @@ class TradingEngine:
             self.run_ws_updater()
         return self
 
-    async def run_in_jupyter(self):
-        # TODO: Transform to sync function. Maybe loop = asyncio.get_event_loop()
-        # loop = asyncio.new_event_loop() or loop.run_until_complete(self._run_socket())
+    def run_sim(self, optuna_config=None):
+        asyncio.run(self.init(is_sim=True))
+        if optuna_config is None:
+            sim_result = simulator.run(self)
+        else:
+            sim_result = hyperparam_search.run(self, optuna_config)
+        return sim_result
+
+    async def run_jupyter(self):
         await self.market_history.load_history()
         if self.config.run_exchange_api:
             self.exchange_ws.ws_priv_run()
@@ -106,8 +112,8 @@ class TradingEngine:
             self.run_ws_updater(run_in_jupyter=True)
         return self
 
-    def run_sim(self, optuna_config=None):
-        asyncio.run(self.init(is_sim=True))
+    async def run_sim_jupyter(self, optuna_config=None):
+        await self.market_history.load_history()
         if optuna_config is None:
             sim_result = simulator.run(self)
         else:
