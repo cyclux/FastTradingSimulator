@@ -61,7 +61,7 @@ async def buy_assets(fts, buy_options):
         asset_symbol = asset["asset"]
         # TODO: Make possible to have multiple orders of same asset
         if asset_symbol in fts.config.assets_excluded:
-            print("[INFO] Asset on blacklist. Will not buy {asset}")
+            print(f"[INFO] Asset on blacklist. Will not buy {asset}")
             continue
         asset_open_orders = fts.trader.get_open_order(asset=asset)
         if len(asset_open_orders) > 0:
