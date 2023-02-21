@@ -1,7 +1,6 @@
 """_summary_
 
 """
-from joblib import parallel_backend
 import optuna
 from frady import simulator
 from frady.simulator.utils import to_numba_dict
@@ -64,6 +63,5 @@ def run(root, optuna_config):
         sampler=optuna_samplers.get(config["sampler"], None)(),
         pruner=optuna_pruners.get(config["pruner"], None)(),
     )
-    with parallel_backend("multiprocessing", n_jobs=config["n_jobs"]):
-        study.optimize(objective, n_trials=config["n_trials"], n_jobs=1)
+    study.optimize(objective, n_trials=config["n_trials"], n_jobs=config["n_jobs"])
     return study
