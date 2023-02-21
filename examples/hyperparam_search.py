@@ -43,16 +43,16 @@ config = {
     },
     "simulation": {
         "sim_start_delta": None,
-        "snapshot_size": 50000,
-        "snapshot_amount": 15,
+        "snapshot_size": 1000,
+        "snapshot_amount": 1,
     },
 }
 
 hyperparam_search = {
     "config": {
-        "study_name": "test",
-        "n_trials": 20,
-        "n_jobs": 8,
+        "study_name": "test10",
+        "n_trials": 2,
+        "n_jobs": 1,
         "direction": "maximize",
         "storage": "JournalStorage",
         "load_if_exists": True,
@@ -70,7 +70,5 @@ hyperparam_search = {
     },
 }
 
-
 best_params = TradingEngine(config=config).run_sim(hyperparam_search)
-print(best_params.trials_dataframe)
 print(best_params.best_params)
