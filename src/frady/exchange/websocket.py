@@ -206,9 +206,9 @@ class ExchangeWebsocket:
             df_history_update.index.name = "t"
             self.root.backend.db_add_history(df_history_update)
 
-            if self.root.trader is not None and self.root.exchange_api.bfx_api_priv is not None:
+            if self.root.exchange_api.bfx_api_priv is not None:
                 await self.root.trader.check_sold_orders()
-            if not self.history_sync_patch_running and not self.config.is_simulation and self.root.trader is not None:
+            if not self.history_sync_patch_running and not self.config.is_simulation:
                 await self.root.trader.update()
                 current_total_profit = self.root.trader.get_profit()
                 self.log.info("Current total profit: $%s", current_total_profit)

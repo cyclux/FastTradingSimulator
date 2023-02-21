@@ -39,6 +39,11 @@ class Backend:
         self.is_collection_new = True
         self.is_filled_na = False
         self.backend_client = self.connect_backend()
+        # Only sync backend now if there is no exchange API connection.
+        # In case an API connection is used, db_sync_trader_state()
+        # will be called once by exchange_ws -> ws_priv_wallet_snapshot()
+        if self.config.use_backend and not self.config.run_exchange_api:
+            self.db_sync_trader_state()
 
     #################
     # Connecting DB #

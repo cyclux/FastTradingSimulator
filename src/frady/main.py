@@ -27,13 +27,13 @@ class TradingEngine:
         self.log.info("Fast Trading Simulator Beta 0.1.0")
         self.assets_list_symbols = None if assets is None or len(assets) == 0 else assets
         self.config = self.register_config(config)
+        self.trader = self.register_trader()
         self.backend = self.register_backend()
         self.market_history = self.register_market_history()
         self.market_updater_api = self.register_updater()
         self.api = self.connect_api()
         self.exchange_api = self.register_exchange_api()
         self.exchange_ws = self.register_exchange_ws()
-        self.trader = self.register_trader()
 
     def config_logger(self):
         logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"), format="%(asctime)s [%(levelname)s] %(message)s")
@@ -72,10 +72,7 @@ class TradingEngine:
         return exchange_ws
 
     def register_trader(self):
-        if self.config.run_exchange_api:
-            trader = Trader(root=self)
-        else:
-            trader = None
+        trader = Trader(root=self)
         return trader
 
     async def init(self, is_sim=False):

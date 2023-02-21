@@ -28,16 +28,11 @@ class Trader:
 
         self.check_run_conditions()
         self.finalize_trading_config()
-        # Only sync backend now if there is no exchange API connection.
-        # In case an API connection is used, db_sync_trader_state()
-        # will be called once by exchange_ws -> ws_priv_wallet_snapshot()
-        if self.config.use_backend and not self.config.run_exchange_api:
-            self.root.backend.db_sync_trader_state()
 
     ##################
     # Initial checks #
     ##################
-
+    # TODO: Move checks to main thread -> relevant to sim as well
     def check_run_conditions(self):
         if (self.config.amount_invest_fiat is None) and (self.config.amount_invest_relative is None):
             sys.exit("[ERROR] Either 'amount_invest_fiat' or 'amount_invest_relative' must be set.")
@@ -50,7 +45,7 @@ class Trader:
 
     def finalize_trading_config(self):
         if self.config.amount_invest_relative is not None and self.config.budget > 0:
-            self.config.amount_invest_fiat = float(np.round(self.config.budget * self.config.amount_invest_relative, 2))
+            self.config.amount_invest_fiat = np.round(self.config.budget * self.config.amount_invest_relative, 2)
         if self.config.buy_limit_strategy and self.config.budget > 0:
             self.config.asset_buy_limit = self.config.budget // self.config.amount_invest_fiat
 
