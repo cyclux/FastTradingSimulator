@@ -1,7 +1,7 @@
 """_summary_
 """
 
-from frady import TradingEngine
+from tradeforce import TradingEngine
 
 config = {
     "trader": {

@@ -2,8 +2,8 @@
 
 """
 import optuna
-from frady import simulator
-from frady.simulator.utils import to_numba_dict
+from tradeforce import simulator
+from tradeforce.simulator.utils import to_numba_dict
 
 
 def determine_param_type(param_vals):

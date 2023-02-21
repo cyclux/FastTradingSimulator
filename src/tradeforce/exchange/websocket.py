@@ -6,9 +6,9 @@ Returns:
 
 import pandas as pd
 
-from frady.utils import convert_symbol_str
-from frady.trader.buys import buy_confirmed
-from frady.trader.sells import sell_confirmed
+from tradeforce.utils import convert_symbol_str
+from tradeforce.trader.buys import buy_confirmed
+from tradeforce.trader.sells import sell_confirmed
 
 
 def check_timestamp_difference(log, start: int = None, end: int = None, freq: str = "5min") -> pd.DatetimeIndex:

@@ -6,7 +6,7 @@ Returns:
 
 import numpy as np
 import pandas as pd
-from frady.utils import get_col_names
+from tradeforce.utils import get_col_names
 
 
 ###########################

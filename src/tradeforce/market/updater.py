@@ -9,7 +9,7 @@ from functools import reduce
 
 import pandas as pd
 
-from frady.utils import (
+from tradeforce.utils import (
     get_now,
     get_timedelta,
     get_time_minus_delta,

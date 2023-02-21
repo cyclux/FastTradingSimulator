@@ -1,7 +1,7 @@
 """_summary_
 """
 import numpy as np
-from frady.utils import calc_fee, convert_symbol_str
+from tradeforce.utils import calc_fee, convert_symbol_str
 
 
 def check_sell_options(root, latest_prices=None, timestamp=None):

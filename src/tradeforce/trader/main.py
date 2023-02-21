@@ -7,9 +7,9 @@ Returns:
 import sys
 import numpy as np
 import pandas as pd
-from frady.utils import convert_symbol_str
-from frady.trader.buys import check_buy_options, buy_assets
-from frady.trader.sells import check_sell_options, sell_assets, sell_confirmed
+from tradeforce.utils import convert_symbol_str
+from tradeforce.trader.buys import check_buy_options, buy_assets
+from tradeforce.trader.sells import check_sell_options, sell_assets, sell_confirmed
 
 
 class Trader:

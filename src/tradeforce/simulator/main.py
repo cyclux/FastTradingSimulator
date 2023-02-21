@@ -28,10 +28,10 @@ Returns:
 import numpy as np
 import numba as nb
 
-from frady.utils import get_timedelta
-from frady.simulator.utils import get_snapshot_indices, calc_metrics, to_numba_dict
-from frady.simulator.buys import check_buy, get_buy_options
-from frady.simulator.sells import check_sell
+from tradeforce.utils import get_timedelta
+from tradeforce.simulator.utils import get_snapshot_indices, calc_metrics, to_numba_dict
+from tradeforce.simulator.buys import check_buy, get_buy_options
+from tradeforce.simulator.sells import check_sell
 
 
 # FIXME: Add money which is in assets on the market

@@ -2,7 +2,7 @@
 """
 
 import concurrent.futures
-from frady import TradingEngine
+from tradeforce import TradingEngine
 
 
 config = {

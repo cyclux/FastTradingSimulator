@@ -6,16 +6,16 @@ websockets tensorflow-probability numexpr Bottleneck numba pyyaml
 import os
 import logging
 import asyncio
-from frady import simulator
-from frady.simulator import hyperparam_search
-from frady.config import Config
-from frady.market.backend import Backend
-from frady.market.history import MarketHistory
-from frady.market.updater import MarketUpdater
-from frady.exchange.api import ExchangeAPI
-from frady.exchange.websocket import ExchangeWebsocket
-from frady.trader import Trader
-from frady.utils import connect_api
+from tradeforce import simulator
+from tradeforce.simulator import hyperparam_search
+from tradeforce.config import Config
+from tradeforce.market.backend import Backend
+from tradeforce.market.history import MarketHistory
+from tradeforce.market.updater import MarketUpdater
+from tradeforce.exchange.api import ExchangeAPI
+from tradeforce.exchange.websocket import ExchangeWebsocket
+from tradeforce.trader import Trader
+from tradeforce.utils import connect_api
 
 
 class TradingEngine:

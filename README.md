@@ -1,12 +1,12 @@
-# frady
+# TradeForce
 
-### **Fa**st **Tra**ding **Si**mulator
+### Bruteforce trading markets
 
 ## Install
 
 ### pip
 
-`pip install frady`
+`pip install tradeforce`
 
 ### Docker
 
