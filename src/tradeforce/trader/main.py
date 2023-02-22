@@ -4,7 +4,6 @@ Returns:
     _type_: _description_
 """
 
-import sys
 import numpy as np
 import pandas as pd
 from tradeforce.utils import convert_symbol_str
@@ -26,26 +25,12 @@ class Trader:
         self.gid = 10**9
         self.min_order_sizes = {}
 
-        self.check_run_conditions()
         self.finalize_trading_config()
 
     ##################
     # Initial checks #
     ##################
-    # TODO: Move checks to main thread -> relevant to sim as well
-    def check_run_conditions(self):
-        if (self.config.amount_invest_fiat is None) and (self.config.amount_invest_relative is None):
-            sys.exit("[ERROR] Either 'amount_invest_fiat' or 'amount_invest_relative' must be set.")
-
-        if (self.config.amount_invest_fiat is not None) and (self.config.amount_invest_relative is not None):
-            self.log.info(
-                "'amount_invest_fiat' and 'amount_invest_relative' are both set."
-                + "'amount_invest_fiat' will be overwritten by 'amount_invest_relative' (relative to the budget)."
-            )
-
     def finalize_trading_config(self):
-        if self.config.amount_invest_relative is not None and self.config.budget > 0:
-            self.config.amount_invest_fiat = np.round(self.config.budget * self.config.amount_invest_relative, 2)
         if self.config.buy_limit_strategy and self.config.budget > 0:
             self.config.asset_buy_limit = self.config.budget // self.config.amount_invest_fiat
 

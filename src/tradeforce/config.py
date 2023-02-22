@@ -90,7 +90,6 @@ class Config:
         self.profit_ratio_limit = config_input.get("profit_ratio_limit", 1.01)
         self.prefer_performance = config_input.get("prefer_performance", "center")
         self.amount_invest_fiat = config_input.get("amount_invest_fiat", None)
-        self.amount_invest_relative = config_input.get("amount_invest_relative", None)
         self.max_buy_per_asset = config_input.get("max_buy_per_asset", 1)
         self.hold_time_limit = config_input.get("hold_time_limit", 20000)
         self.buy_limit_strategy = config_input.get("buy_limit_strategy", False)
