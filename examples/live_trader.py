@@ -18,7 +18,6 @@ config = {
             "buy_opportunity_factor": 0.10,
             "buy_opportunity_boundary": 0.10,
             "prefer_performance": "positive",
-            "max_buy_per_asset": 1,
             "hold_time_limit": 12000,
             "profit_factor": 1.70,
             "profit_ratio_limit": 1,

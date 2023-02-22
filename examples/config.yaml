@@ -9,7 +9,6 @@ trader:
   budget: 1100
   strategy:
     amount_invest_fiat: 100
-    max_buy_per_asset: 1
     investment_cap: 0
     buy_opportunity_factor: 0.10
     buy_opportunity_boundary: 0.05
