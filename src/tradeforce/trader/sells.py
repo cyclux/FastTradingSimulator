@@ -26,19 +26,12 @@ def check_sell_options(root, latest_prices=None, timestamp=None):
         portfolio_performance[symbol] = np.round(current_profit_ratio, 2)
         time_since_buy = (timestamp - open_order["timestamp_buy"]) / 1000 / 60 // 5
 
-        buy_orders_maxed_out = (
-            len(open_orders) >= root.config.asset_buy_limit
-            if root.config.buy_limit_strategy is True
-            else root.config.budget < root.config.amount_invest_fiat
-        )
         ok_to_sell = (
-            time_since_buy > root.config.hold_time_limit
-            and current_profit_ratio >= root.config.profit_ratio_limit
-            and buy_orders_maxed_out
+            time_since_buy > root.config.hold_time_limit and current_profit_ratio >= root.config.profit_ratio_limit
         )
+        # TODO: is_simulation == dry_run?!
         if root.config.is_simulation:
-            if (price_current >= price_profit) or ok_to_sell:
-                # IF SIMULATION
+            if price_current >= price_profit or ok_to_sell:
                 # check plausibility and prevent false logic
                 # profit gets a max plausible threshold
                 if price_current / price_profit > 1.2:
@@ -46,7 +39,7 @@ def check_sell_options(root, latest_prices=None, timestamp=None):
                 sell_option = {"asset": symbol, "price_sell": price_current}
                 sell_options.append(sell_option)
         else:
-            if buy_orders_maxed_out and ok_to_sell:
+            if ok_to_sell:
                 sell_option = {
                     "asset": symbol,
                     "price_sell": price_current,
@@ -78,9 +71,7 @@ async def sell_assets(root, sell_options):
             )
             closed_order["sell_fee_fiat"] = sell_fee_fiat
             closed_order["sell_volume_crypto"] = sell_volume_crypto
-            closed_order["sell_volume_fiat"] = (
-                closed_order["buy_volume_crypto"] * closed_order["price_sell"]
-            ) - sell_fee_fiat
+            closed_order["sell_volume_fiat"] = (sell_volume_crypto * closed_order["price_sell"]) - sell_fee_fiat
             closed_order["profit_fiat"] = closed_order["sell_volume_fiat"] - closed_order["amount_invest_fiat"]
             root.trader.new_order(closed_order, "closed_orders")
             root.trader.del_order(open_order[0], "open_orders")
@@ -129,12 +120,13 @@ def sell_confirmed(root, sell_order):
         closed_order = open_order[0].copy()
         closed_order["sell_timestamp"] = sell_order["mts_update"]
         closed_order["price_sell"] = sell_order["price_avg"]
-        closed_order["sell_volume_crypto"], _, closed_order["sell_fee_fiat"] = calc_fee(
-            root.config, abs(sell_order["amount_orig"]), sell_order["price_avg"], order_type="sell"
+        sell_volume_crypto = abs(sell_order["amount_orig"])
+        sell_volume_crypto_incl_fee, _, closed_order["sell_fee_fiat"] = calc_fee(
+            root.config, sell_volume_crypto, sell_order["price_avg"], order_type="sell"
         )
-        closed_order["sell_volume_fiat"] = float(
-            np.round(abs(sell_order["amount_orig"]) * sell_order["price_avg"] - closed_order["sell_fee_fiat"], 2)
-        )
+        sell_volume_fiat_incl_fee = sell_volume_crypto_incl_fee * sell_order["price_avg"]
+        closed_order["sell_volume_fiat"] = np.round(sell_volume_fiat_incl_fee - closed_order["sell_fee_fiat"], 3)
+
         closed_order["profit_fiat"] = closed_order["sell_volume_fiat"] - closed_order["amount_invest_fiat"]
         root.trader.new_order(closed_order, "closed_orders")
         root.trader.del_order(open_order[0], "open_orders")

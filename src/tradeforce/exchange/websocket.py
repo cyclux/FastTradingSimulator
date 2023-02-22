@@ -264,7 +264,6 @@ class ExchangeWebsocket:
     async def ws_priv_wallet_snapshot(self, ws_wallet_snapshot):
         self.log.debug("wallet_snapshot: %s", str(ws_wallet_snapshot))
         self.root.trader.set_budget(ws_wallet_snapshot)
-        self.root.trader.finalize_trading_config()
         self.root.backend.db_sync_trader_state()
         await self.root.trader.get_min_order_sizes()
 

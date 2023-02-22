@@ -7,7 +7,7 @@ import numba.typed as nb_types
 from numba.core import types
 
 NB_PARALLEL = False
-NB_CACHE = True
+NB_CACHE = False
 
 
 def numba_dict_defaults(sim_params):
@@ -30,11 +30,6 @@ def to_numba_dict(sim_params):
         sim_params["prefer_performance"] = -1
     if sim_params["prefer_performance"] == "center":
         sim_params["prefer_performance"] = 0
-
-    if sim_params["buy_limit_strategy"] is True:
-        sim_params["buy_limit_strategy"] = 1
-    else:
-        sim_params["buy_limit_strategy"] = 0
 
     sim_params_numba = nb_types.Dict.empty(key_type=types.unicode_type, value_type=types.float64)
     for key, val in sim_params.items():
@@ -59,13 +54,13 @@ def fill_nan(nd_array):
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
-def calc_fee(volume, maker_fee, taker_fee, price_current, order_type):
-    volume = abs(volume)
+def calc_fee(volume_crypto, maker_fee, taker_fee, price_current, order_type):
+    volume_crypto = abs(volume_crypto)
     exchange_fee = taker_fee if order_type == "buy" else maker_fee
-    amount_fee_crypto = volume / 100 * exchange_fee
-    volume_incl_fee = volume - amount_fee_crypto
-    amount_fee_fiat = np.round(amount_fee_crypto * price_current, 2)
-    return volume_incl_fee, amount_fee_fiat
+    amount_fee_crypto = (volume_crypto / 100) * exchange_fee
+    volume_crypto_incl_fee = volume_crypto - amount_fee_crypto
+    amount_fee_fiat = np.round(amount_fee_crypto * price_current, 3)
+    return volume_crypto_incl_fee, amount_fee_crypto, amount_fee_fiat
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)

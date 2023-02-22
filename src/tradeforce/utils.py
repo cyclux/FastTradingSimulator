@@ -107,13 +107,13 @@ def connect_api(creds_path, api_type=None):
     return bfx_api
 
 
-def calc_fee(config, volume, price_current, order_type):
-    volume = abs(volume)
+def calc_fee(config, volume_crypto, price_current, order_type):
+    volume_crypto = abs(volume_crypto)
     exchange_fee = config.taker_fee if order_type == "buy" else config.maker_fee
-    amount_fee_crypto = volume / 100 * exchange_fee
-    volume_incl_fee = volume - amount_fee_crypto
-    amount_fee_fiat = np.round(amount_fee_crypto * price_current, 2)
-    return volume_incl_fee, amount_fee_crypto, amount_fee_fiat
+    amount_fee_crypto = (volume_crypto / 100) * exchange_fee
+    volume_crypto_incl_fee = volume_crypto - amount_fee_crypto
+    amount_fee_fiat = np.round(amount_fee_crypto * price_current, 3)
+    return volume_crypto_incl_fee, amount_fee_crypto, amount_fee_fiat
 
 
 # TODO: Following functions are not currently used. Check relevance

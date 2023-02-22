@@ -25,15 +25,6 @@ class Trader:
         self.gid = 10**9
         self.min_order_sizes = {}
 
-        self.finalize_trading_config()
-
-    ##################
-    # Initial checks #
-    ##################
-    def finalize_trading_config(self):
-        if self.config.buy_limit_strategy and self.config.budget > 0:
-            self.config.asset_buy_limit = self.config.budget // self.config.amount_invest_fiat
-
     ####################
     # Order operations #
     ####################

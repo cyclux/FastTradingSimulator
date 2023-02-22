@@ -6,22 +6,19 @@ from tradeforce import TradingEngine
 config = {
     "trader": {
         "id": 1,
-        "creds_path": "exchange_creds.cfg",
-        "use_backend": True,
-        "dry_run": False,
-        "budget": 1100,
+        "budget": 3000,
         "maker_fee": 0.10,
         "taker_fee": 0.20,
         "strategy": {
             "amount_invest_fiat": 100,
-            "buy_limit_strategy": False,
+            "investment_cap": 0,
             "buy_opportunity_factor": 0.10,
             "buy_opportunity_boundary": 0.05,
             "prefer_performance": "positive",
             "max_buy_per_asset": 1,
             "hold_time_limit": 1000,
             "profit_factor": 1.70,
-            "profit_ratio_limit": 1,
+            "profit_ratio_limit": 1.01,
             "window": 180,
         },
     },
@@ -42,8 +39,8 @@ config = {
     },
     "simulation": {
         "sim_start_delta": None,
-        "snapshot_size": 0,
-        "snapshot_amount": 1,
+        "snapshot_size": 10000,
+        "snapshot_amount": 15,
     },
 }
 

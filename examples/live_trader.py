@@ -14,7 +14,7 @@ config = {
         "taker_fee": 0.20,
         "strategy": {
             "amount_invest_fiat": 1000,
-            "buy_limit_strategy": False,
+            "investment_cap": 0,
             "buy_opportunity_factor": 0.10,
             "buy_opportunity_boundary": 0.10,
             "prefer_performance": "positive",

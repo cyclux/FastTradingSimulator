@@ -132,8 +132,9 @@ async def buy_assets(root, buy_options):
 
 async def buy_confirmed(root, buy_order):
     asset_price_profit = get_significant_digits(buy_order.price * root.config.profit_factor, 5)
+    buy_order_fee = np.round(abs(buy_order.fee), 5)
     asset_symbol = convert_symbol_str(buy_order.symbol, base_currency=root.config.base_currency, to_exchange=False)
-    buy_volume_fiat = float(np.round(root.config.amount_invest_fiat - buy_order.fee, 5))
+    buy_volume_fiat = np.round(root.config.amount_invest_fiat - buy_order_fee, 5)
     # Wait until balance is registered by websocket into self.wallets
     await asyncio_sleep(10)
     buy_volume_crypto = root.trader.wallets[asset_symbol].balance_available
@@ -149,7 +150,7 @@ async def buy_confirmed(root, buy_order):
         "price_profit": asset_price_profit,
         "amount_invest_fiat": root.config.amount_invest_fiat,
         "buy_volume_fiat": buy_volume_fiat,
-        "buy_fee_fiat": buy_order.fee,
+        "buy_fee_fiat": buy_order_fee,
         "buy_volume_crypto": buy_volume_crypto,
     }
     root.trader.new_order(open_order, "open_orders")

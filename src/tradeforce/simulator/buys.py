@@ -6,7 +6,7 @@ import numba as nb
 from tradeforce.simulator.utils import calc_fee
 
 NB_PARALLEL = False
-NB_CACHE = True
+NB_CACHE = False
 
 
 @nb.njit()
@@ -39,10 +39,11 @@ def buy_asset(
     budget,
 ):
     price_profit = price_current * profit_factor
-    amount_invest_fiat_incl_fee, amount_fee_buy_fiat = calc_fee(
-        amount_invest_fiat, maker_fee, taker_fee, price_current, "buy"
+    amount_invest_crypto = amount_invest_fiat / price_current
+    amount_invest_crypto_incl_fee, _, amount_fee_buy_fiat = calc_fee(
+        amount_invest_crypto, maker_fee, taker_fee, price_current, "buy"
     )
-    amount_invest_crypto_incl_fee = amount_invest_fiat_incl_fee / price_current
+    amount_invest_fiat_incl_fee = amount_invest_fiat - amount_fee_buy_fiat
     budget -= amount_invest_fiat
     bought_asset_params = np.array(
         [
@@ -66,8 +67,7 @@ def buy_asset(
 def check_buy(
     list_buy_options,
     buybag,
-    asset_buy_limit,
-    buy_limit_strategy,
+    investment_cap,
     max_buy_per_asset,
     buyfactor_row,
     row_idx,
@@ -79,6 +79,8 @@ def check_buy(
     taker_fee,
     budget,
 ):
+    # amount_buy_orders = buybag.shape[0]
+    # print("before", amount_buy_orders)
     for buy_option_idx in list_buy_options:
         price_current = df_history_prices[row_idx, buy_option_idx]
         if buy_option_idx in buybag[:, 0:1]:
@@ -94,9 +96,13 @@ def check_buy(
             if is_max_buy_per_asset or not is_buy_opportunity:
                 continue
 
-        amount_buy_orders = buybag.shape[0]
-        buy_condition = amount_buy_orders < asset_buy_limit if buy_limit_strategy == 1 else budget >= amount_invest_fiat
-        if buy_condition:
+        investment_fiat_incl_fee = buybag[:, 5:6]
+        fee_fiat = buybag[:, 7:8]
+        investment_total = np.sum(investment_fiat_incl_fee + fee_fiat)
+        if investment_total >= investment_cap > 0:
+            continue
+
+        if budget >= amount_invest_fiat:
             bought_asset_params, budget = buy_asset(
                 buy_option_idx,
                 buyfactor_row,
@@ -109,4 +115,5 @@ def check_buy(
                 budget,
             )
             buybag = np.append(buybag, bought_asset_params, axis=0)
+    # amount_buy_orders = buybag.shape[0]
     return buybag

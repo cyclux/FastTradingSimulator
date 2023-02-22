@@ -7,7 +7,7 @@ import numba.typed as nb_types
 from tradeforce.simulator.utils import calc_fee, array_diff
 
 NB_PARALLEL = False
-NB_CACHE = True
+NB_CACHE = False
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
@@ -23,12 +23,11 @@ def sell_asset(
     taker_fee,
     budget,
 ):
-
     amount_invest_crypto = bought_asset_params[6]
-    amount_sold_crypto_incl_fee, amount_fee_sell_fiat = calc_fee(
+    amount_sold_crypto_incl_fee, _, amount_fee_sell_fiat = calc_fee(
         amount_invest_crypto, maker_fee, taker_fee, price_current, "sell"
     )
-    amount_sold_fiat_incl_fee = np.round(amount_sold_crypto_incl_fee * price_current, 2)
+    amount_sold_fiat_incl_fee = np.round(amount_sold_crypto_incl_fee * price_current, 3)
     amount_profit_fiat = amount_sold_fiat_incl_fee - amount_invest_fiat
     bought_asset_params[8] = budget + amount_sold_fiat_incl_fee
     placeholder_value_crypto_in_fiat = 0.0
@@ -68,8 +67,6 @@ def check_sell(
     maker_fee,
     taker_fee,
     budget,
-    asset_buy_limit,
-    buy_limit_strategy,
     hold_time_limit,
     profit_ratio_limit,
 ):
@@ -88,12 +85,7 @@ def check_sell(
         time_since_buy = row_idx - row_idx_bought
         current_profit_ratio = price_current / price_bought
 
-        buy_orders_maxed_out = (
-            amount_buy_orders >= asset_buy_limit if buy_limit_strategy == 1 else budget < amount_invest_fiat
-        )
-        ok_to_sell = (
-            time_since_buy > hold_time_limit and current_profit_ratio >= profit_ratio_limit and buy_orders_maxed_out
-        )
+        ok_to_sell = time_since_buy > hold_time_limit and current_profit_ratio >= profit_ratio_limit
         if (price_current >= price_profit) or ok_to_sell:
             # check plausibility and prevent false logic
             # profit gets a max plausible threshold

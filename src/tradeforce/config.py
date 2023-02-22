@@ -16,7 +16,7 @@ SIM_RELEVANT_ENTRIES = [
     "amount_invest_fiat",
     "maker_fee",
     "taker_fee",
-    "buy_limit_strategy",
+    "investment_cap",
     "hold_time_limit",
     "profit_ratio_limit",
     "max_buy_per_asset",
@@ -48,6 +48,7 @@ def flatten_dict(input_dict):
 class Config:
     """_summary_"""
 
+    # TODO: Add sanity check
     def __init__(self, root, config_input):
         self.log = root.logging.getLogger(__name__)
         config_type = "config.yaml" if config_input is None else "dict"
@@ -92,7 +93,7 @@ class Config:
         self.amount_invest_fiat = config_input.get("amount_invest_fiat", None)
         self.max_buy_per_asset = config_input.get("max_buy_per_asset", 1)
         self.hold_time_limit = config_input.get("hold_time_limit", 20000)
-        self.buy_limit_strategy = config_input.get("buy_limit_strategy", False)
+        self.investment_cap = config_input.get("investment_cap", 0)
         self.maker_fee = config_input.get("maker_fee", 0.10)
         self.taker_fee = config_input.get("taker_fee", 0.20)
         self.use_backend = config_input.get("use_backend", True)

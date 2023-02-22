@@ -42,7 +42,7 @@ type_float = nb.typeof(0.1)
 # type_array_2d_float = nb.typeof(np.array([[0.1]]))
 
 NB_PARALLEL = False
-NB_CACHE = True
+NB_CACHE = False
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
@@ -57,8 +57,7 @@ def iter_market_history(
     buy_opportunity_factor_min,
     prefer_performance,
     profit_factor,
-    asset_buy_limit,
-    buy_limit_strategy,
+    investment_cap,
     max_buy_per_asset,
     hold_time_limit,
     profit_ratio_limit,
@@ -83,8 +82,6 @@ def iter_market_history(
             maker_fee,
             taker_fee,
             budget,
-            asset_buy_limit,
-            buy_limit_strategy,
             hold_time_limit,
             profit_ratio_limit,
         )
@@ -102,8 +99,7 @@ def iter_market_history(
             buybag = check_buy(
                 list_buy_options,
                 buybag,
-                asset_buy_limit,
-                buy_limit_strategy,
+                investment_cap,
                 max_buy_per_asset,
                 buyfactor_row,
                 row_idx,
@@ -139,14 +135,13 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
     amount_invest_fiat = sim_params_numba["amount_invest_fiat"]
     maker_fee = sim_params_numba["maker_fee"]
     taker_fee = sim_params_numba["taker_fee"]
-    buy_limit_strategy = sim_params_numba["buy_limit_strategy"]
+    investment_cap = sim_params_numba["investment_cap"]
     hold_time_limit = sim_params_numba["hold_time_limit"]
     profit_ratio_limit = sim_params_numba["profit_ratio_limit"]
     max_buy_per_asset = sim_params_numba["max_buy_per_asset"]
     snapshot_size = sim_params_numba["snapshot_size"]
     snapshot_amount = np.int64(sim_params_numba["snapshot_amount"])
 
-    asset_buy_limit = budget // amount_invest_fiat
     if buy_opportunity_factor != 999:
         buy_opportunity_factor_min = buy_opportunity_factor - buy_opportunity_boundary
         buy_opportunity_factor_max = buy_opportunity_factor + buy_opportunity_boundary
@@ -186,8 +181,7 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
             buy_opportunity_factor_min,
             prefer_performance,
             profit_factor,
-            asset_buy_limit,
-            buy_limit_strategy,
+            investment_cap,
             max_buy_per_asset,
             hold_time_limit,
             profit_ratio_limit,
