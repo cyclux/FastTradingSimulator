@@ -7,8 +7,6 @@ config = {
     "trader": {
         "id": 1,
         "creds_path": "exchange_creds.cfg",
-        "use_backend": True,
-        "dry_run": False,
         "budget": 0,
         "maker_fee": 0.10,
         "taker_fee": 0.20,
@@ -16,7 +14,7 @@ config = {
             "amount_invest_fiat": 1000,
             "investment_cap": 0,
             "buy_opportunity_factor": 0.10,
-            "buy_opportunity_boundary": 0.10,
+            "buy_opportunity_boundary": 0.05,
             "prefer_performance": "positive",
             "hold_time_limit": 12000,
             "profit_factor": 1.70,
@@ -38,10 +36,6 @@ config = {
         "update_history": False,
         "run_exchange_api": True,
         "keep_updated": True,
-    },
-    "simulation": {
-        "snapshot_size": -1,
-        "snapshot_amount": 1,
     },
 }
 

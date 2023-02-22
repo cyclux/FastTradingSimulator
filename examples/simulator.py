@@ -6,7 +6,7 @@ from tradeforce import TradingEngine
 config = {
     "trader": {
         "id": 1,
-        "budget": 3000,
+        "budget": 1100,
         "maker_fee": 0.10,
         "taker_fee": 0.20,
         "strategy": {
@@ -38,8 +38,8 @@ config = {
     },
     "simulation": {
         "sim_start_delta": None,
-        "snapshot_size": 10000,
-        "snapshot_amount": 15,
+        "snapshot_size": 0,
+        "snapshot_amount": 1,
     },
 }
 

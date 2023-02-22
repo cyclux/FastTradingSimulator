@@ -8,9 +8,6 @@ from tradeforce import TradingEngine
 config = {
     "trader": {
         "id": 1,
-        "creds_path": "exchange_creds.cfg",
-        "use_backend": True,
-        "dry_run": False,
         "budget": 1100,
         "maker_fee": 0.10,
         "taker_fee": 0.20,
