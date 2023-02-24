@@ -38,6 +38,19 @@ def to_numba_dict(sim_params):
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
+def sanitize_snapshot_params(snapshot_size, snapshot_amount, snapshot_idx_boundary):
+    if snapshot_size <= 0:
+        snapshot_size = -1
+    if snapshot_amount <= 0:
+        snapshot_amount = 1
+    if snapshot_amount == 1 and snapshot_size == -1:
+        snapshot_size = snapshot_idx_boundary
+    if snapshot_amount > 1 and snapshot_size == -1:
+        snapshot_size = snapshot_idx_boundary // snapshot_amount
+    return snapshot_size, snapshot_amount
+
+
+@nb.njit(cache=NB_CACHE, parallel=False)
 def array_diff(arr1, arr2):
     diff_list = nb_types.List(set(arr1) - set(arr2))
     diff_array = np.array([x for x in diff_list])
