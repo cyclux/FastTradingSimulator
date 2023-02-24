@@ -46,6 +46,18 @@ NB_CACHE = False
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
+def set_budget_from_bag(row_idx, budget, bag, bag_type):
+    # bag_row_idx of 2 == row_idx of buy opportunity
+    # bag_row_idx of 9 == row_idx of sell opportunity
+    bag_row_idx = 2 if bag_type == "buybag" else 9
+    if bag.shape[0] > 0:
+        row_idx_last_tx = bag[-1, bag_row_idx]
+        if row_idx_last_tx == row_idx:
+            budget = bag[-1, 8]
+    return budget
+
+
+@nb.njit(cache=NB_CACHE, parallel=False)
 def iter_market_history(
     df_buy_factors,
     snapshot_bounds,
@@ -85,15 +97,12 @@ def iter_market_history(
             hold_time_limit,
             profit_ratio_limit,
         )
-
-        if soldbag.shape[0] > 0:
-            row_idx_last_sell = soldbag[-1, 9]
-            if row_idx_last_sell == row_idx:
-                budget = soldbag[-1, 8]
+        budget = set_budget_from_bag(row_idx, budget, soldbag, "soldbag")
 
         list_buy_options = get_buy_options(
             buyfactor_row, buy_opportunity_factor, buy_opportunity_boundary, prefer_performance
         )
+
         buybag = check_buy(
             list_buy_options,
             buybag,
@@ -109,11 +118,7 @@ def iter_market_history(
             taker_fee,
             budget,
         )
-        if buybag.shape[0] > 0:
-            row_idx_last_buy = buybag[-1, 2]
-            if row_idx_last_buy == row_idx:
-                budget = buybag[-1, 8]
-
+        budget = set_budget_from_bag(row_idx, budget, buybag, "buybag")
         current_idx += 300000
 
     return soldbag, buybag
