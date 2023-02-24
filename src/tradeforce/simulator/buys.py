@@ -10,19 +10,24 @@ NB_CACHE = False
 
 
 @nb.njit()
-def get_buy_options(buy_options_bool, buyfactor_row, buy_opportunity_factor, prefer_performance):
+def get_buy_options(buyfactor_row, buy_opportunity_factor, buy_opportunity_boundary, prefer_performance):
     # prefer_performance can be -1, 1, and 0.
-    buy_option_indices = np.where(buy_options_bool)[0].astype(np.float64)
-    buy_option_values = buyfactor_row[buy_options_bool]
-    # buy_opportunity_factor == 999 means it is not set
-    if prefer_performance == 0 and buy_opportunity_factor != 999:
-        buy_option_values = np.absolute(buy_option_values - buy_opportunity_factor)
-    buy_option_array = np.vstack((buy_option_indices, buy_option_values))
-    buy_option_array = buy_option_array[:, buy_option_array[1, :].argsort()]
-    if prefer_performance == 1:
-        # flip axis
-        buy_option_array = buy_option_array[:, ::-1]
-    buy_option_array_int = buy_option_array[0].astype(np.int64)
+    buy_opportunity_factor_min = buy_opportunity_factor - buy_opportunity_boundary
+    buy_opportunity_factor_max = buy_opportunity_factor + buy_opportunity_boundary
+
+    buy_options_bool = (buyfactor_row >= buy_opportunity_factor_min) & (buyfactor_row <= buy_opportunity_factor_max)
+    if np.any(buy_options_bool):
+        buy_option_indices = np.where(buy_options_bool)[0].astype(np.float64)
+        buy_option_values = buyfactor_row[buy_options_bool]
+        # buy_opportunity_factor == 999 means it is not set
+        if prefer_performance == 0 and buy_opportunity_factor != 999:
+            buy_option_values = np.absolute(buy_option_values - buy_opportunity_factor)
+        buy_option_array = np.vstack((buy_option_indices, buy_option_values))
+        buy_option_array = buy_option_array[:, buy_option_array[1, :].argsort()]
+        if prefer_performance == 1:
+            # flip axis
+            buy_option_array = buy_option_array[:, ::-1]
+        buy_option_array_int = buy_option_array[0].astype(np.int64)
     return buy_option_array_int
 
 

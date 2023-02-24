@@ -54,7 +54,7 @@ def iter_market_history(
     budget,
     buy_opportunity_factor,
     buy_opportunity_factor_max,
-    buy_opportunity_factor_min,
+    buy_opportunity_boundary,
     prefer_performance,
     profit_factor,
     investment_cap,
@@ -91,30 +91,28 @@ def iter_market_history(
             if row_idx_last_sell == row_idx:
                 budget = soldbag[-1, 8]
 
-        buy_options_bool = (buyfactor_row >= buy_opportunity_factor_min) & (buyfactor_row <= buy_opportunity_factor_max)
-        if np.any(buy_options_bool):
-            list_buy_options = get_buy_options(
-                buy_options_bool, buyfactor_row, buy_opportunity_factor, prefer_performance
-            )
-            buybag = check_buy(
-                list_buy_options,
-                buybag,
-                investment_cap,
-                max_buy_per_asset,
-                buyfactor_row,
-                row_idx,
-                df_history_prices,
-                buy_opportunity_factor_max,
-                profit_factor,
-                amount_invest_fiat,
-                maker_fee,
-                taker_fee,
-                budget,
-            )
-            if buybag.shape[0] > 0:
-                row_idx_last_buy = buybag[-1, 2]
-                if row_idx_last_buy == row_idx:
-                    budget = buybag[-1, 8]
+        list_buy_options = get_buy_options(
+            buyfactor_row, buy_opportunity_factor, buy_opportunity_boundary, prefer_performance
+        )
+        buybag = check_buy(
+            list_buy_options,
+            buybag,
+            investment_cap,
+            max_buy_per_asset,
+            buyfactor_row,
+            row_idx,
+            df_history_prices,
+            buy_opportunity_factor_max,
+            profit_factor,
+            amount_invest_fiat,
+            maker_fee,
+            taker_fee,
+            budget,
+        )
+        if buybag.shape[0] > 0:
+            row_idx_last_buy = buybag[-1, 2]
+            if row_idx_last_buy == row_idx:
+                budget = buybag[-1, 8]
 
         current_idx += 300000
 
@@ -126,7 +124,6 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
     current_idx = sim_params_numba["index_start"]
     window = sim_params_numba["window"]
     buy_opportunity_factor_max = sim_params_numba["buy_opportunity_factor_max"]
-    buy_opportunity_factor_min = sim_params_numba["buy_opportunity_factor_min"]
     buy_opportunity_factor = sim_params_numba["buy_opportunity_factor"]
     buy_opportunity_boundary = sim_params_numba["buy_opportunity_boundary"]
     prefer_performance = sim_params_numba["prefer_performance"]
@@ -143,7 +140,6 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
     snapshot_amount = np.int64(sim_params_numba["snapshot_amount"])
 
     if buy_opportunity_factor != 999:
-        buy_opportunity_factor_min = buy_opportunity_factor - buy_opportunity_boundary
         buy_opportunity_factor_max = buy_opportunity_factor + buy_opportunity_boundary
 
     # Fill NaN probably not needed as it is done by the data fetch api
@@ -178,7 +174,7 @@ def simulate_trading(sim_params_numba, df_buy_factors, df_history_prices):
             budget,
             buy_opportunity_factor,
             buy_opportunity_factor_max,
-            buy_opportunity_factor_min,
+            buy_opportunity_boundary,
             prefer_performance,
             profit_factor,
             investment_cap,
