@@ -7,7 +7,7 @@ import numba.typed as nb_types
 from numba.core import types
 
 NB_PARALLEL = False
-NB_CACHE = False
+NB_CACHE = True
 
 
 def numba_dict_defaults(sim_params):
@@ -77,9 +77,9 @@ def calc_fee(volume_crypto, maker_fee, taker_fee, price_current, order_type):
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
-def get_snapshot_indices(snapshot_idx_boundary, snapshot_amount=10, snapshot_size=10000):
+def get_snapshot_indices(window, snapshot_idx_boundary, snapshot_amount=10, snapshot_size=10000):
     snapshot_idx_boundary = np.int64(snapshot_idx_boundary - snapshot_size)
-    snapshot_idxs = np.linspace(0, snapshot_idx_boundary, snapshot_amount).astype(np.int64)
+    snapshot_idxs = np.linspace(window, snapshot_idx_boundary, snapshot_amount).astype(np.int64)
     return snapshot_idxs
 
 

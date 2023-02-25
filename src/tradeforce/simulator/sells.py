@@ -7,7 +7,7 @@ import numba.typed as nb_types
 from tradeforce.simulator.utils import calc_fee, array_diff
 
 NB_PARALLEL = False
-NB_CACHE = False
+NB_CACHE = True
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
@@ -62,7 +62,7 @@ def check_sell(
     buybag,
     soldbag,
     row_idx,
-    df_history_prices,
+    history_prices_row,
     amount_invest_fiat,
     maker_fee,
     taker_fee,
@@ -79,7 +79,7 @@ def check_sell(
         buy_option_idx = bought_asset_params[0]
         buy_option_idx_int = np.int64(buy_option_idx)
         row_idx_bought = bought_asset_params[2]
-        price_current = df_history_prices[row_idx, buy_option_idx_int]
+        price_current = history_prices_row[buy_option_idx_int]
         price_bought = bought_asset_params[3]
         price_profit = bought_asset_params[4]
         time_since_buy = row_idx - row_idx_bought
@@ -116,9 +116,7 @@ def check_sell(
         # Calculate buybag crypto value in fiat
         crypto_invested = buybag[:, 6:7].flatten()
         asset_idx = buybag[:, 0:1].flatten().astype(np.int64)
-        # TODO: Linter quick fix: whitespace : row_idx + 1
-        row_idx_1 = row_idx + 1
-        current_price_buybag = df_history_prices[row_idx:row_idx_1, asset_idx].flatten()
+        current_price_buybag = history_prices_row[asset_idx].flatten()
         value_crypto_in_fiat = np.sum(current_price_buybag * crypto_invested)
         sold_asset_reverse_idx = (sold_asset_idx * -1) - 1
         soldbag[sold_asset_reverse_idx:, 15:16] = np.round(value_crypto_in_fiat, 2)

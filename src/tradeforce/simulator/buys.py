@@ -6,14 +6,26 @@ import numba as nb
 from tradeforce.simulator.utils import calc_fee
 
 NB_PARALLEL = False
-NB_CACHE = False
+NB_CACHE = True
 
 
 @nb.njit()
-def get_buy_options(buyfactor_row, buy_opportunity_factor, buy_opportunity_boundary, prefer_performance):
+def get_buy_options(
+    window,
+    row_idx,
+    df_history_prices_pct,
+    buy_opportunity_factor,
+    buy_opportunity_boundary,
+    prefer_performance,
+):
     # prefer_performance can be -1, 1, and 0.
     buy_opportunity_factor_min = buy_opportunity_factor - buy_opportunity_boundary
     buy_opportunity_factor_max = buy_opportunity_factor + buy_opportunity_boundary
+
+    window_start = np.int64(row_idx - window)
+    window_end = row_idx
+    window_history_prices_pct = df_history_prices_pct[window_start:window_end]
+    buyfactor_row = np.sum(window_history_prices_pct, axis=0)
 
     buy_options_bool = (buyfactor_row >= buy_opportunity_factor_min) & (buyfactor_row <= buy_opportunity_factor_max)
     if np.any(buy_options_bool):
@@ -28,7 +40,7 @@ def get_buy_options(buyfactor_row, buy_opportunity_factor, buy_opportunity_bound
             # flip axis
             buy_option_array = buy_option_array[:, ::-1]
         buy_option_array_int = buy_option_array[0].astype(np.int64)
-    return buy_option_array_int
+    return buy_option_array_int, buyfactor_row
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
@@ -76,7 +88,7 @@ def check_buy(
     max_buy_per_asset,
     buyfactor_row,
     row_idx,
-    df_history_prices,
+    history_prices_row,
     buy_opportunity_factor_max,
     profit_factor,
     amount_invest_fiat,
@@ -87,7 +99,7 @@ def check_buy(
     # amount_buy_orders = buybag.shape[0]
     # print("before", amount_buy_orders)
     for buy_option_idx in list_buy_options:
-        price_current = df_history_prices[row_idx, buy_option_idx]
+        price_current = history_prices_row[buy_option_idx]
         if buy_option_idx in buybag[:, 0:1]:
 
             buybag_idxs = buybag[:, 0:1]

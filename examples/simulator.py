@@ -38,8 +38,8 @@ config = {
     },
     "simulation": {
         "sim_start_delta": None,
-        "snapshot_size": 0,
-        "snapshot_amount": 1,
+        "snapshot_size": 100000,
+        "snapshot_amount": 10,
     },
 }
 
