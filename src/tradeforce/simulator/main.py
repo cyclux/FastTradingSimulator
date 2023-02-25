@@ -42,7 +42,7 @@ type_float = nb.typeof(0.1)
 # type_array_2d_float = nb.typeof(np.array([[0.1]]))
 
 NB_PARALLEL = False
-NB_CACHE = True
+NB_CACHE = False
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
@@ -79,13 +79,12 @@ def iter_market_history(
         )
         budget = set_budget_from_bag(row_idx, budget, soldbag, "soldbag")
 
-        list_buy_options, buyfactor_row = get_buy_options(params, row_idx, df_history_prices_pct)
+        list_buy_options = get_buy_options(params, row_idx, df_history_prices_pct)
 
         buybag = check_buy(
             params,
             list_buy_options,
             buybag,
-            buyfactor_row,
             row_idx,
             history_prices_row,
             budget,

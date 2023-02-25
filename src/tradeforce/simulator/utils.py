@@ -7,7 +7,7 @@ import numba.typed as nb_types
 from numba.core import types
 
 NB_PARALLEL = False
-NB_CACHE = True
+NB_CACHE = False
 
 
 def numba_dict_defaults(sim_params):

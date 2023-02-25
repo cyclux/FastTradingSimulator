@@ -7,7 +7,7 @@ import numba.typed as nb_types
 from tradeforce.simulator.utils import calc_fee, array_diff
 
 NB_PARALLEL = False
-NB_CACHE = True
+NB_CACHE = False
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)

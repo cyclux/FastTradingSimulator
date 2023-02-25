@@ -6,7 +6,7 @@ import numba as nb
 from tradeforce.simulator.utils import calc_fee
 
 NB_PARALLEL = False
-NB_CACHE = True
+NB_CACHE = False
 
 
 @nb.njit()
@@ -32,13 +32,12 @@ def get_buy_options(params, row_idx, df_history_prices_pct):
             # flip axis
             buy_option_array = buy_option_array[:, ::-1]
         buy_option_array_int = buy_option_array[0].astype(np.int64)
-    return buy_option_array_int, buyfactor_row
+    return buy_option_array_int
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
 def buy_asset(
     buy_option_idx,
-    buyfactor_row,
     row_idx,
     price_current,
     profit_factor,
@@ -58,7 +57,7 @@ def buy_asset(
         [
             [
                 buy_option_idx,
-                buyfactor_row[buy_option_idx],
+                1.0,  # placeholder
                 row_idx,
                 price_current,
                 price_profit,
@@ -73,7 +72,7 @@ def buy_asset(
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
-def check_buy(params, list_buy_options, buybag, buyfactor_row, row_idx, history_prices_row, budget):
+def check_buy(params, list_buy_options, buybag, row_idx, history_prices_row, budget):
     # amount_buy_orders = buybag.shape[0]
     # print("before", amount_buy_orders)
     for buy_option_idx in list_buy_options:
@@ -100,7 +99,6 @@ def check_buy(params, list_buy_options, buybag, buyfactor_row, row_idx, history_
         if budget >= params["amount_invest_fiat"]:
             bought_asset_params, budget = buy_asset(
                 buy_option_idx,
-                buyfactor_row,
                 row_idx,
                 price_current,
                 params["profit_factor"],
