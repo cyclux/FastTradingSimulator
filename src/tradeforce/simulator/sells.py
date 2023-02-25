@@ -56,20 +56,7 @@ def sell_asset(
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
-def check_sell(
-    current_iter,
-    current_idx,
-    buybag,
-    soldbag,
-    row_idx,
-    history_prices_row,
-    amount_invest_fiat,
-    maker_fee,
-    taker_fee,
-    budget,
-    hold_time_limit,
-    profit_ratio_limit,
-):
+def check_sell(params, current_iter, current_idx, buybag, soldbag, row_idx, history_prices_row, budget):
     if buybag.shape[0] < 1:
         return soldbag, buybag
 
@@ -85,7 +72,7 @@ def check_sell(
         time_since_buy = row_idx - row_idx_bought
         current_profit_ratio = price_current / price_bought
 
-        ok_to_sell = time_since_buy > hold_time_limit and current_profit_ratio >= profit_ratio_limit
+        ok_to_sell = time_since_buy > params["hold_time_limit"] and current_profit_ratio >= params["profit_ratio_limit"]
         if (price_current >= price_profit) or ok_to_sell:
             # check plausibility and prevent false logic
             # profit gets a max plausible threshold
@@ -98,9 +85,9 @@ def check_sell(
                 bought_asset_params,
                 soldbag,
                 price_current,
-                amount_invest_fiat,
-                maker_fee,
-                taker_fee,
+                params["amount_invest_fiat"],
+                params["maker_fee"],
+                params["taker_fee"],
                 budget,
             )
             budget = soldbag[-1, 8]

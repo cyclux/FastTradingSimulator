@@ -38,7 +38,9 @@ def to_numba_dict(sim_params):
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
-def sanitize_snapshot_params(snapshot_size, snapshot_amount, snapshot_idx_boundary):
+def sanitize_snapshot_params(params, snapshot_idx_boundary):
+    snapshot_size = params["snapshot_size"]
+    snapshot_amount = np.int64(params["snapshot_amount"])
     if snapshot_size <= 0:
         snapshot_size = -1
     if snapshot_amount <= 0:

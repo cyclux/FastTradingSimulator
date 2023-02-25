@@ -59,26 +59,14 @@ def set_budget_from_bag(row_idx, budget, bag, bag_type):
 
 @nb.njit(cache=NB_CACHE, parallel=False)
 def iter_market_history(
-    window,
+    params,
     df_history_prices_pct,
     snapshot_bounds,
     df_history_prices,
-    amount_invest_fiat,
-    budget,
-    buy_opportunity_factor,
-    buy_opportunity_factor_max,
-    buy_opportunity_boundary,
-    prefer_performance,
-    profit_factor,
-    investment_cap,
-    max_buy_per_asset,
-    hold_time_limit,
-    profit_ratio_limit,
-    maker_fee,
-    taker_fee,
     current_idx,
     current_iter,
 ):
+    budget = params["budget"]
     buybag = np.empty((0, 9), type_float)
     soldbag = np.empty((0, 20), type_float)
     start_idx = snapshot_bounds[0]
@@ -87,43 +75,19 @@ def iter_market_history(
         # row_idx needs to get shifted by start_idx (start idx of the current snapshot iteration)
         row_idx += start_idx
         soldbag, buybag = check_sell(
-            current_iter,
-            current_idx,
-            buybag,
-            soldbag,
-            row_idx,
-            history_prices_row,
-            amount_invest_fiat,
-            maker_fee,
-            taker_fee,
-            budget,
-            hold_time_limit,
-            profit_ratio_limit,
+            params, current_iter, current_idx, buybag, soldbag, row_idx, history_prices_row, budget
         )
         budget = set_budget_from_bag(row_idx, budget, soldbag, "soldbag")
 
-        list_buy_options, buyfactor_row = get_buy_options(
-            window,
-            row_idx,
-            df_history_prices_pct,
-            buy_opportunity_factor,
-            buy_opportunity_boundary,
-            prefer_performance,
-        )
+        list_buy_options, buyfactor_row = get_buy_options(params, row_idx, df_history_prices_pct)
 
         buybag = check_buy(
+            params,
             list_buy_options,
             buybag,
-            investment_cap,
-            max_buy_per_asset,
             buyfactor_row,
             row_idx,
             history_prices_row,
-            buy_opportunity_factor_max,
-            profit_factor,
-            amount_invest_fiat,
-            maker_fee,
-            taker_fee,
             budget,
         )
         budget = set_budget_from_bag(row_idx, budget, buybag, "buybag")
@@ -133,28 +97,8 @@ def iter_market_history(
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
-def simulate_trading(sim_params_numba, df_history_prices):
-    current_idx = sim_params_numba["index_start"]
-    window = sim_params_numba["window"]
-    buy_opportunity_factor_max = sim_params_numba["buy_opportunity_factor_max"]
-    buy_opportunity_factor = sim_params_numba["buy_opportunity_factor"]
-    buy_opportunity_boundary = sim_params_numba["buy_opportunity_boundary"]
-    prefer_performance = sim_params_numba["prefer_performance"]
-    profit_factor = sim_params_numba["profit_factor"]
-    budget = sim_params_numba["budget"]
-    amount_invest_fiat = sim_params_numba["amount_invest_fiat"]
-    maker_fee = sim_params_numba["maker_fee"]
-    taker_fee = sim_params_numba["taker_fee"]
-    investment_cap = sim_params_numba["investment_cap"]
-    hold_time_limit = sim_params_numba["hold_time_limit"]
-    profit_ratio_limit = sim_params_numba["profit_ratio_limit"]
-    max_buy_per_asset = sim_params_numba["max_buy_per_asset"]
-    snapshot_size = sim_params_numba["snapshot_size"]
-    snapshot_amount = np.int64(sim_params_numba["snapshot_amount"])
-
-    if buy_opportunity_factor != 999:
-        buy_opportunity_factor_max = buy_opportunity_factor + buy_opportunity_boundary
-
+def simulate_trading(params, df_history_prices):
+    current_idx = params["index_start"]
     # Fill NaN probably not needed as it is done by the data fetch api
     # fill_nan(df_buy_factors)
     # current_idx += window * 300000
@@ -163,31 +107,20 @@ def simulate_trading(sim_params_numba, df_history_prices):
     df_history_prices = df_history_prices[1:]
 
     snapshot_idx_boundary = df_history_prices_pct.shape[0]
-    snapshot_size, snapshot_amount = sanitize_snapshot_params(snapshot_size, snapshot_amount, snapshot_idx_boundary)
-    snapshot_start_idxs = get_snapshot_indices(window, snapshot_idx_boundary, snapshot_amount, snapshot_size)
+    snapshot_size, snapshot_amount = sanitize_snapshot_params(params, snapshot_idx_boundary)
+    snapshot_start_idxs = get_snapshot_indices(params["window"], snapshot_idx_boundary, snapshot_amount, snapshot_size)
     profit_snapshot_list = np.empty(snapshot_amount, type_float)
     soldbag_all_snapshots = np.empty((0, 20), type_float)
     # index_start = np.float64(history_buy_factors.index[0])
     for current_iter, snapshot_idx in enumerate(snapshot_start_idxs, 1):
         snapshot_bounds = (snapshot_idx, snapshot_idx + snapshot_size)
+        # params["index_start"] = current_idx + (snapshot_idx * 300000)
+
         soldbag, buybag = iter_market_history(
-            window,
+            params,
             df_history_prices_pct,
             snapshot_bounds,
             df_history_prices,
-            amount_invest_fiat,
-            budget,
-            buy_opportunity_factor,
-            buy_opportunity_factor_max,
-            buy_opportunity_boundary,
-            prefer_performance,
-            profit_factor,
-            investment_cap,
-            max_buy_per_asset,
-            hold_time_limit,
-            profit_ratio_limit,
-            maker_fee,
-            taker_fee,
             current_idx + (snapshot_idx * 300000),
             current_iter,
         )

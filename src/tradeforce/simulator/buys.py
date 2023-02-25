@@ -10,19 +10,11 @@ NB_CACHE = True
 
 
 @nb.njit()
-def get_buy_options(
-    window,
-    row_idx,
-    df_history_prices_pct,
-    buy_opportunity_factor,
-    buy_opportunity_boundary,
-    prefer_performance,
-):
+def get_buy_options(params, row_idx, df_history_prices_pct):
     # prefer_performance can be -1, 1, and 0.
-    buy_opportunity_factor_min = buy_opportunity_factor - buy_opportunity_boundary
-    buy_opportunity_factor_max = buy_opportunity_factor + buy_opportunity_boundary
-
-    window_start = np.int64(row_idx - window)
+    buy_opportunity_factor_min = params["buy_opportunity_factor"] - params["buy_opportunity_boundary"]
+    buy_opportunity_factor_max = params["buy_opportunity_factor"] + params["buy_opportunity_boundary"]
+    window_start = np.int64(row_idx - params["window"])
     window_end = row_idx
     window_history_prices_pct = df_history_prices_pct[window_start:window_end]
     buyfactor_row = np.sum(window_history_prices_pct, axis=0)
@@ -32,11 +24,11 @@ def get_buy_options(
         buy_option_indices = np.where(buy_options_bool)[0].astype(np.float64)
         buy_option_values = buyfactor_row[buy_options_bool]
         # buy_opportunity_factor == 999 means it is not set
-        if prefer_performance == 0 and buy_opportunity_factor != 999:
-            buy_option_values = np.absolute(buy_option_values - buy_opportunity_factor)
+        if params["prefer_performance"] == 0 and params["buy_opportunity_factor"] != 999:
+            buy_option_values = np.absolute(buy_option_values - params["buy_opportunity_factor"])
         buy_option_array = np.vstack((buy_option_indices, buy_option_values))
         buy_option_array = buy_option_array[:, buy_option_array[1, :].argsort()]
-        if prefer_performance == 1:
+        if params["prefer_performance"] == 1:
             # flip axis
             buy_option_array = buy_option_array[:, ::-1]
         buy_option_array_int = buy_option_array[0].astype(np.int64)
@@ -81,21 +73,7 @@ def buy_asset(
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
-def check_buy(
-    list_buy_options,
-    buybag,
-    investment_cap,
-    max_buy_per_asset,
-    buyfactor_row,
-    row_idx,
-    history_prices_row,
-    buy_opportunity_factor_max,
-    profit_factor,
-    amount_invest_fiat,
-    maker_fee,
-    taker_fee,
-    budget,
-):
+def check_buy(params, list_buy_options, buybag, buyfactor_row, row_idx, history_prices_row, budget):
     # amount_buy_orders = buybag.shape[0]
     # print("before", amount_buy_orders)
     for buy_option_idx in list_buy_options:
@@ -105,30 +83,30 @@ def check_buy(
             buybag_idxs = buybag[:, 0:1]
             buybag_idx = np.where(buybag_idxs == buy_option_idx)[0]
             asset_buy_prices = buybag[buybag_idx, 3]
-            min_price_bought = np.min(asset_buy_prices)
+            # min_price_bought = np.min(asset_buy_prices)
 
-            is_max_buy_per_asset = len(asset_buy_prices) >= max_buy_per_asset
+            is_max_buy_per_asset = len(asset_buy_prices) >= params["max_buy_per_asset"]
 
-            is_buy_opportunity = min_price_bought * (1 + buy_opportunity_factor_max) >= price_current
-            if is_max_buy_per_asset or not is_buy_opportunity:
+            # is_buy_opportunity = min_price_bought * (1 + buy_opportunity_factor_max) >= price_current
+            if is_max_buy_per_asset:  # or not is_buy_opportunity:
                 continue
 
         investment_fiat_incl_fee = buybag[:, 5:6]
         fee_fiat = buybag[:, 7:8]
         investment_total = np.sum(investment_fiat_incl_fee + fee_fiat)
-        if investment_total >= investment_cap > 0:
+        if investment_total >= params["investment_cap"] > 0:
             continue
 
-        if budget >= amount_invest_fiat:
+        if budget >= params["amount_invest_fiat"]:
             bought_asset_params, budget = buy_asset(
                 buy_option_idx,
                 buyfactor_row,
                 row_idx,
                 price_current,
-                profit_factor,
-                amount_invest_fiat,
-                maker_fee,
-                taker_fee,
+                params["profit_factor"],
+                params["amount_invest_fiat"],
+                params["maker_fee"],
+                params["taker_fee"],
                 budget,
             )
             buybag = np.append(buybag, bought_asset_params, axis=0)
