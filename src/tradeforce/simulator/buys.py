@@ -10,21 +10,16 @@ NB_CACHE = False
 
 
 @nb.njit()
-def get_buy_options(params, row_idx, df_history_prices_pct):
-    # prefer_performance can be -1, 1, and 0.
+def default_strategy(params, window_history_prices_pct):
+    buyfactor_row = np.sum(window_history_prices_pct, axis=0)
     buy_opportunity_factor_min = params["buy_opportunity_factor"] - params["buy_opportunity_boundary"]
     buy_opportunity_factor_max = params["buy_opportunity_factor"] + params["buy_opportunity_boundary"]
-    window_start = np.int64(row_idx - params["window"])
-    window_end = row_idx
-    window_history_prices_pct = df_history_prices_pct[window_start:window_end]
-    buyfactor_row = np.sum(window_history_prices_pct, axis=0)
-
     buy_options_bool = (buyfactor_row >= buy_opportunity_factor_min) & (buyfactor_row <= buy_opportunity_factor_max)
     if np.any(buy_options_bool):
         buy_option_indices = np.where(buy_options_bool)[0].astype(np.float64)
         buy_option_values = buyfactor_row[buy_options_bool]
-        # buy_opportunity_factor == 999 means it is not set
-        if params["prefer_performance"] == 0 and params["buy_opportunity_factor"] != 999:
+        # prefer_performance can be -1, 1, and 0.
+        if params["prefer_performance"] == 0:
             buy_option_values = np.absolute(buy_option_values - params["buy_opportunity_factor"])
         buy_option_array = np.vstack((buy_option_indices, buy_option_values))
         buy_option_array = buy_option_array[:, buy_option_array[1, :].argsort()]

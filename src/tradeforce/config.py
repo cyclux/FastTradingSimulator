@@ -3,27 +3,6 @@
 
 import yaml
 
-SIM_RELEVANT_ENTRIES = [
-    "index_start",
-    "window",
-    "buy_opportunity_factor",
-    "buy_opportunity_factor_max",
-    "buy_opportunity_factor_min",
-    "buy_opportunity_boundary",
-    "prefer_performance",
-    "profit_factor",
-    "budget",
-    "amount_invest_fiat",
-    "maker_fee",
-    "taker_fee",
-    "investment_cap",
-    "hold_time_limit",
-    "profit_ratio_limit",
-    "max_buy_per_asset",
-    "snapshot_size",
-    "snapshot_amount",
-]
-
 
 def load_yaml_config():
     with open("config.yaml", "r", encoding="utf8") as stream:
@@ -59,6 +38,10 @@ class Config:
 
         config_input = flatten_dict(config_input)
 
+        for config_key, config_val in config_input.items():
+            setattr(self, config_key, config_val)
+
+        # Default values to fall back on if param is not specified in user config
         self.working_dir = config_input.get("working_dir", None)
         self.update_history = config_input.get("update_history", False)
         self.run_exchange_api = config_input.get("run_exchange_api", False)
@@ -85,15 +68,13 @@ class Config:
         self.budget = float(config_input.get("budget", 0))
         self.buy_opportunity_factor = config_input.get("buy_opportunity_factor", 0.0)
         self.buy_opportunity_boundary = config_input.get("buy_opportunity_boundary", 0.02)
-        self.buy_opportunity_factor_min = self.buy_opportunity_factor - self.buy_opportunity_boundary
-        self.buy_opportunity_factor_max = self.buy_opportunity_factor + self.buy_opportunity_boundary
         self.profit_factor = config_input.get("profit_factor", 0.05)
         self.profit_ratio_limit = config_input.get("profit_ratio_limit", 1.01)
-        self.prefer_performance = config_input.get("prefer_performance", "center")
-        self.amount_invest_fiat = config_input.get("amount_invest_fiat", None)
+        self.prefer_performance = config_input.get("prefer_performance", 0)
+        self.amount_invest_fiat = config_input.get("amount_invest_fiat", 0)
         # TODO: Implement max_buy_per_asset > 1
         self.max_buy_per_asset = config_input.get("max_buy_per_asset", 1)
-        self.hold_time_limit = config_input.get("hold_time_limit", 20000)
+        self.hold_time_limit = config_input.get("hold_time_limit", 10000)
         self.investment_cap = config_input.get("investment_cap", 0)
         self.maker_fee = config_input.get("maker_fee", 0.10)
         self.taker_fee = config_input.get("taker_fee", 0.20)
@@ -127,6 +108,33 @@ class Config:
 
     def to_dict(self, for_sim=True):
         attr_to_dict = self.__dict__
+        sim_dict_exclusions = [
+            "log",
+            "working_dir",
+            "update_history",
+            "run_exchange_api",
+            "keep_updated",
+            "exchange",
+            "load_history_via",
+            "check_db_consistency",
+            "dump_to_feather",
+            "candle_interval",
+            "base_currency",
+            "history_timeframe",
+            "backend",
+            "backend_host",
+            "backend_user",
+            "backend_password",
+            "mongo_exchange_db",
+            "mongo_collection",
+            "creds_path",
+            "relevant_assets_cap",
+            "id",
+            "use_backend",
+            "dry_run",
+            "is_simulation",
+            "assets_excluded",
+        ]
         if for_sim:
-            attr_to_dict = {key: val for (key, val) in attr_to_dict.items() if key in SIM_RELEVANT_ENTRIES}
+            attr_to_dict = {key: val for (key, val) in attr_to_dict.items() if key not in sim_dict_exclusions}
         return attr_to_dict

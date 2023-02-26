@@ -22,16 +22,18 @@ def check_buy_options(root, latest_prices=None, timestamp=None):
             timestamp = df_latest_prices.index[0]
     buy_performance = get_asset_buy_performance(root, history_window=root.config.window, timestamp=timestamp)
     if buy_performance is not None:
-        buy_condition = (buy_performance >= root.config.buy_opportunity_factor_min) & (
-            buy_performance <= root.config.buy_opportunity_factor_max
+        buy_opportunity_factor_min = root.config.buy_opportunity_factor - root.config.buy_opportunity_boundary
+        buy_opportunity_factor_max = root.config.buy_opportunity_factor + root.config.buy_opportunity_boundary
+        buy_condition = (buy_performance >= buy_opportunity_factor_min) & (
+            buy_performance <= buy_opportunity_factor_max
         )
         buy_options = buy_performance[buy_condition]
         df_buy_options = pd.DataFrame({"perf": buy_options, "price": latest_prices}).dropna()
-        if root.config.prefer_performance == "negative":
+        if root.config.prefer_performance == -1:
             df_buy_options = df_buy_options.sort_values(by="perf", ascending=True)
-        if root.config.prefer_performance == "positive":
+        if root.config.prefer_performance == 1:
             df_buy_options = df_buy_options.sort_values(by="perf", ascending=False)
-        if root.config.prefer_performance == "center":
+        if root.config.prefer_performance == 0:
             df_buy_options.loc[:, "perf"] = np.absolute(df_buy_options["perf"] - root.config.buy_opportunity_factor)
             df_buy_options = df_buy_options.sort_values(by="perf")
 

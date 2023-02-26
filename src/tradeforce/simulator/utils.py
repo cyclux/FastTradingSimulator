@@ -10,6 +10,7 @@ NB_PARALLEL = False
 NB_CACHE = False
 
 
+# legacy params, but may be useful with other params
 def numba_dict_defaults(sim_params):
     set_default_params = [
         "buy_opportunity_factor",
@@ -23,14 +24,7 @@ def numba_dict_defaults(sim_params):
 
 
 def to_numba_dict(sim_params):
-    sim_params = numba_dict_defaults(sim_params)
-    if sim_params["prefer_performance"] == "positive":
-        sim_params["prefer_performance"] = 1
-    if sim_params["prefer_performance"] == "negative":
-        sim_params["prefer_performance"] = -1
-    if sim_params["prefer_performance"] == "center":
-        sim_params["prefer_performance"] = 0
-
+    # sim_params = numba_dict_defaults(sim_params)
     sim_params_numba = nb_types.Dict.empty(key_type=types.unicode_type, value_type=types.float64)
     for key, val in sim_params.items():
         sim_params_numba[key] = np.float64(val)

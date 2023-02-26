@@ -1,6 +1,10 @@
 """_summary_
 """
 
+
+import numpy as np
+
+import numba as nb
 from tradeforce import TradingEngine
 
 config = {
@@ -37,12 +41,34 @@ config = {
         "keep_updated": True,
     },
     "simulation": {
-        "sim_start_delta": None,
         "snapshot_size": 100000,
         "snapshot_amount": 10,
     },
 }
 
 assets = []
-sim_result = TradingEngine(config=config, assets=assets).run_sim()
+
+
+@nb.njit()
+def buy_strategy(params, window_history_prices_pct):
+    buyfactor_row = np.sum(window_history_prices_pct, axis=0)
+    buy_opportunity_factor_min = params["buy_opportunity_score"] - params["buy_opportunity_boundary"]
+    buy_opportunity_factor_max = params["buy_opportunity_score"] + params["buy_opportunity_boundary"]
+    buy_options_bool = (buyfactor_row >= buy_opportunity_factor_min) & (buyfactor_row <= buy_opportunity_factor_max)
+    if np.any(buy_options_bool):
+        buy_option_indices = np.where(buy_options_bool)[0].astype(np.float64)
+        buy_option_values = buyfactor_row[buy_options_bool]
+        # prefer_performance can be -1, 0 or 1.
+        if params["prefer_performance"] == 0:
+            buy_option_values = np.absolute(buy_option_values - params["buy_opportunity_score"])
+        buy_option_array = np.vstack((buy_option_indices, buy_option_values))
+        buy_option_array = buy_option_array[:, buy_option_array[1, :].argsort()]
+        if params["prefer_performance"] == 1:
+            # flip axis
+            buy_option_array = buy_option_array[:, ::-1]
+        buy_option_array_int = buy_option_array[0].astype(np.int64)
+    return buy_option_array_int
+
+
+sim_result = TradingEngine(config=config, assets=assets).run_sim(buy_strategy=buy_strategy)
 print(sim_result["profit"])

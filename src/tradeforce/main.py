@@ -93,10 +93,10 @@ class TradingEngine:
             self.run_ws_updater()
         return self
 
-    def run_sim(self, optuna_config=None):
+    def run_sim(self, optuna_config=None, buy_strategy=None):
         asyncio.run(self.init(is_sim=True))
         if optuna_config is None:
-            sim_result = simulator.run(self)
+            sim_result = simulator.run(self, buy_strategy=buy_strategy)
         else:
             sim_result = hyperparam_search.run(self, optuna_config)
         return sim_result
@@ -109,10 +109,10 @@ class TradingEngine:
             self.run_ws_updater(run_in_jupyter=True)
         return self
 
-    async def run_sim_jupyter(self, optuna_config=None):
+    async def run_sim_jupyter(self, optuna_config=None, buy_strategy=None):
         await self.market_history.load_history()
         if optuna_config is None:
-            sim_result = simulator.run(self)
+            sim_result = simulator.run(self, buy_strategy=buy_strategy)
         else:
             sim_result = hyperparam_search.run(self, optuna_config)
         return sim_result

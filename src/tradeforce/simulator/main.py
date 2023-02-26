@@ -30,7 +30,7 @@ import numba as nb
 
 from tradeforce.utils import get_timedelta
 from tradeforce.simulator.utils import get_snapshot_indices, calc_metrics, to_numba_dict, sanitize_snapshot_params
-from tradeforce.simulator.buys import check_buy, get_buy_options
+from tradeforce.simulator.buys import check_buy, default_strategy
 from tradeforce.simulator.sells import check_sell
 
 
@@ -58,8 +58,17 @@ def set_budget_from_bag(row_idx, budget, bag, bag_type):
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
+def get_moving_window(params, row_idx, df_history_prices_pct):
+    window_start = np.int64(row_idx - params["window"])
+    window_end = row_idx
+    window_history_prices_pct = df_history_prices_pct[window_start:window_end]
+    return window_history_prices_pct
+
+
+@nb.njit(cache=NB_CACHE, parallel=False)
 def iter_market_history(
     params,
+    buy_strategy,
     df_history_prices_pct,
     snapshot_bounds,
     df_history_prices,
@@ -79,7 +88,12 @@ def iter_market_history(
         )
         budget = set_budget_from_bag(row_idx, budget, soldbag, "soldbag")
 
-        list_buy_options = get_buy_options(params, row_idx, df_history_prices_pct)
+        window_history_prices_pct = get_moving_window(params, row_idx, df_history_prices_pct)
+
+        if buy_strategy is not None:
+            list_buy_options = buy_strategy(params, window_history_prices_pct)
+        else:
+            list_buy_options = default_strategy(params, window_history_prices_pct)
 
         buybag = check_buy(
             params,
@@ -96,7 +110,8 @@ def iter_market_history(
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
-def simulate_trading(params, df_history_prices):
+def simulate_trading(params, df_history_prices, buy_strategy):
+    # strategy = nb.jit(nopython=True)(strategy)
     current_idx = params["index_start"]
     # Fill NaN probably not needed as it is done by the data fetch api
     # fill_nan(df_buy_factors)
@@ -117,6 +132,7 @@ def simulate_trading(params, df_history_prices):
 
         soldbag, buybag = iter_market_history(
             params,
+            buy_strategy,
             df_history_prices_pct,
             snapshot_bounds,
             df_history_prices,
@@ -156,12 +172,13 @@ def prepare_sim(root):
     return bfx_history.to_numpy()
 
 
-def run(root, bfx_history=None, sim_config=None):
+def run(root, bfx_history=None, sim_config=None, buy_strategy=None):
     if bfx_history is None:
         bfx_history = prepare_sim(root)
     if sim_config is None:
         sim_config = to_numba_dict(root.config.to_dict())
 
-    total_profit, trades_history, buy_log = simulate_trading(sim_config, bfx_history)
+    # strategy = nb.jit(nopython=True)(strategy)
+    total_profit, trades_history, buy_log = simulate_trading(sim_config, bfx_history, buy_strategy)
     sim_result = {"profit": total_profit, "trades": trades_history, "buy_log": buy_log}
     return sim_result
