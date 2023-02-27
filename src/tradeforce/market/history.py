@@ -10,12 +10,13 @@ from tradeforce.utils import ms_to_ns, get_col_names, ns_to_ms, get_time_minus_d
 from tradeforce.market.metrics import get_init_relevant_assets
 
 
-def get_pct_change(df_history, as_factor=True):
+def get_pct_change(df_history, pct_first_row, as_factor=True):
     df_history_pct = df_history.pct_change()
     if as_factor:
         df_history_pct += 1
+    if pct_first_row is not None:
+        df_history_pct.iloc[0] = 0
     df_history_pct.columns = [f"{col}_pct" for col in df_history_pct.columns]
-    df_history = pd.concat([df_history, df_history_pct], axis=1, copy=False)
     return df_history_pct
 
 
@@ -179,6 +180,7 @@ class MarketHistory:
         metrics=None,
         pct_change=False,
         pct_as_factor=True,
+        pct_first_row=None,
         fill_na=False,
         uniform_cols=False,
     ):
@@ -223,7 +225,7 @@ class MarketHistory:
             df_market_history = self.df_market_history.loc[from_list]
 
         if pct_change:
-            df_market_history = get_pct_change(df_market_history, as_factor=pct_as_factor)
+            df_market_history = get_pct_change(df_market_history, pct_first_row, as_factor=pct_as_factor)
 
         if uniform_cols and len(metrics) == 1:
             df_market_history.columns = get_col_names(df_market_history)
