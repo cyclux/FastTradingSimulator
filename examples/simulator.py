@@ -18,7 +18,7 @@ config = {
             "investment_cap": 0,
             "buy_opportunity_factor": 0.10,
             "buy_opportunity_boundary": 0.05,
-            "prefer_performance": "positive",
+            "prefer_performance": 1,
             "hold_time_limit": 1000,
             "profit_factor": 1.70,
             "profit_ratio_limit": 1.01,
@@ -52,15 +52,15 @@ assets = []
 @nb.njit()
 def buy_strategy(params, window_history_prices_pct):
     buyfactor_row = np.sum(window_history_prices_pct, axis=0)
-    buy_opportunity_factor_min = params["buy_opportunity_score"] - params["buy_opportunity_boundary"]
-    buy_opportunity_factor_max = params["buy_opportunity_score"] + params["buy_opportunity_boundary"]
+    buy_opportunity_factor_min = params["buy_opportunity_factor"] - params["buy_opportunity_boundary"]
+    buy_opportunity_factor_max = params["buy_opportunity_factor"] + params["buy_opportunity_boundary"]
     buy_options_bool = (buyfactor_row >= buy_opportunity_factor_min) & (buyfactor_row <= buy_opportunity_factor_max)
     if np.any(buy_options_bool):
         buy_option_indices = np.where(buy_options_bool)[0].astype(np.float64)
         buy_option_values = buyfactor_row[buy_options_bool]
         # prefer_performance can be -1, 0 or 1.
         if params["prefer_performance"] == 0:
-            buy_option_values = np.absolute(buy_option_values - params["buy_opportunity_score"])
+            buy_option_values = np.absolute(buy_option_values - params["buy_opportunity_factor"])
         buy_option_array = np.vstack((buy_option_indices, buy_option_values))
         buy_option_array = buy_option_array[:, buy_option_array[1, :].argsort()]
         if params["prefer_performance"] == 1:
