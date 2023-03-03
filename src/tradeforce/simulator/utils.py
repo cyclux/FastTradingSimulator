@@ -7,7 +7,7 @@ import numba.typed as nb_types
 from numba.core import types
 
 NB_PARALLEL = False
-NB_CACHE = False
+NB_CACHE = True
 
 
 # legacy params, but may be useful with other params
@@ -46,6 +46,7 @@ def sanitize_snapshot_params(params, snapshot_idx_boundary):
     return snapshot_size, snapshot_amount
 
 
+# currently not used
 @nb.njit(cache=NB_CACHE, parallel=False)
 def array_diff(arr1, arr2):
     diff_list = nb_types.List(set(arr1) - set(arr2))
@@ -53,6 +54,7 @@ def array_diff(arr1, arr2):
     return diff_array
 
 
+# currently not used
 @nb.njit(cache=NB_CACHE, parallel=False)  # parallel not checked
 def fill_nan(nd_array):
     shape = nd_array.shape
@@ -63,12 +65,12 @@ def fill_nan(nd_array):
 
 
 @nb.njit(cache=NB_CACHE, parallel=False)
-def calc_fee(volume_crypto, maker_fee, taker_fee, price_current, order_type):
-    volume_crypto = abs(volume_crypto)
+def calc_fee(volume_crypto, maker_fee, taker_fee, prices_current, order_type):
+    volume_crypto = np.absolute(volume_crypto)
     exchange_fee = taker_fee if order_type == "buy" else maker_fee
     amount_fee_crypto = (volume_crypto / 100) * exchange_fee
     volume_crypto_incl_fee = volume_crypto - amount_fee_crypto
-    amount_fee_fiat = np.round(amount_fee_crypto * price_current, 3)
+    amount_fee_fiat = amount_fee_crypto * prices_current
     return volume_crypto_incl_fee, amount_fee_crypto, amount_fee_fiat
 
 
@@ -83,3 +85,20 @@ def get_snapshot_indices(window, snapshot_idx_boundary, snapshot_amount=10, snap
 def calc_metrics(soldbag):
     total_profit = soldbag[:, 14:15].sum()
     return np.int64(total_profit)
+
+
+@nb.njit(cache=NB_CACHE, parallel=True)
+def get_pct_change(df_history_prices):
+    df_history_prices_pct = (df_history_prices[1:, :] - df_history_prices[:-1, :]) / df_history_prices[1:, :]
+    amount_zeros = df_history_prices_pct.shape[-1]
+    zeros = np.zeros((1, amount_zeros))
+    df_history_prices_pct = np.vstack((zeros, df_history_prices_pct))
+    return df_history_prices_pct
+
+
+@nb.njit(cache=NB_CACHE, parallel=False)
+def get_current_window(params, df_history_prices_pct):
+    window_start = np.int64(params["row_idx"] - params["window"])
+    window_end = np.int64(params["row_idx"])
+    window_history_prices_pct = df_history_prices_pct[window_start:window_end]
+    return window_history_prices_pct

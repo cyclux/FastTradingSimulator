@@ -1,33 +1,14 @@
 """_summary_
 """
 
+# from time import perf_counter
 import numpy as np
 import numba as nb
-from tradeforce.simulator.utils import calc_fee
+import tradeforce.simulator.utils as sim_utils
+import tradeforce.simulator.default_strategies as strategies
 
 NB_PARALLEL = False
-NB_CACHE = False
-
-
-@nb.njit()
-def default_strategy(params, window_history_prices_pct):
-    buyfactor_row = np.sum(window_history_prices_pct, axis=0)
-    buy_opportunity_factor_min = params["buy_opportunity_factor"] - params["buy_opportunity_boundary"]
-    buy_opportunity_factor_max = params["buy_opportunity_factor"] + params["buy_opportunity_boundary"]
-    buy_options_bool = (buyfactor_row >= buy_opportunity_factor_min) & (buyfactor_row <= buy_opportunity_factor_max)
-    if np.any(buy_options_bool):
-        buy_option_indices = np.where(buy_options_bool)[0].astype(np.float64)
-        buy_option_values = buyfactor_row[buy_options_bool]
-        # prefer_performance can be -1, 1, and 0.
-        if params["prefer_performance"] == 0:
-            buy_option_values = np.absolute(buy_option_values - params["buy_opportunity_factor"])
-        buy_option_array = np.vstack((buy_option_indices, buy_option_values))
-        buy_option_array = buy_option_array[:, buy_option_array[1, :].argsort()]
-        if params["prefer_performance"] == 1:
-            # flip axis
-            buy_option_array = buy_option_array[:, ::-1]
-        buy_option_array_int = buy_option_array[0].astype(np.int64)
-    return buy_option_array_int
+NB_CACHE = True
 
 
 @nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
@@ -43,7 +24,7 @@ def buy_asset(
 ):
     price_profit = price_current * profit_factor
     amount_invest_crypto = amount_invest_fiat / price_current
-    amount_invest_crypto_incl_fee, _, amount_fee_buy_fiat = calc_fee(
+    amount_invest_crypto_incl_fee, _, amount_fee_buy_fiat = sim_utils.calc_fee(
         amount_invest_crypto, maker_fee, taker_fee, price_current, "buy"
     )
     amount_invest_fiat_incl_fee = amount_invest_fiat - amount_fee_buy_fiat
@@ -66,10 +47,11 @@ def buy_asset(
     return bought_asset_params, budget
 
 
-@nb.njit(cache=NB_CACHE, parallel=NB_PARALLEL)
-def check_buy(params, list_buy_options, buybag, row_idx, history_prices_row, budget):
-    # amount_buy_orders = buybag.shape[0]
-    # print("before", amount_buy_orders)
+# cache needs to be off in case of a user defined trading strategy function
+@nb.njit(cache=False, parallel=NB_PARALLEL, fastmath=True)
+def check_buy(params, df_asset_prices_pct, df_asset_performance, buybag, history_prices_row, budget):
+    list_buy_options = strategies.buy_strategy(params, df_asset_prices_pct, df_asset_performance)
+
     for buy_option_idx in list_buy_options:
         price_current = history_prices_row[buy_option_idx]
         if buy_option_idx in buybag[:, 0:1]:
@@ -77,12 +59,8 @@ def check_buy(params, list_buy_options, buybag, row_idx, history_prices_row, bud
             buybag_idxs = buybag[:, 0:1]
             buybag_idx = np.where(buybag_idxs == buy_option_idx)[0]
             asset_buy_prices = buybag[buybag_idx, 3]
-            # min_price_bought = np.min(asset_buy_prices)
-
             is_max_buy_per_asset = len(asset_buy_prices) >= params["max_buy_per_asset"]
-
-            # is_buy_opportunity = min_price_bought * (1 + buy_opportunity_factor_max) >= price_current
-            if is_max_buy_per_asset:  # or not is_buy_opportunity:
+            if is_max_buy_per_asset:
                 continue
 
         investment_fiat_incl_fee = buybag[:, 5:6]
@@ -94,7 +72,7 @@ def check_buy(params, list_buy_options, buybag, row_idx, history_prices_row, bud
         if budget >= params["amount_invest_fiat"]:
             bought_asset_params, budget = buy_asset(
                 buy_option_idx,
-                row_idx,
+                params["row_idx"],
                 price_current,
                 params["profit_factor"],
                 params["amount_invest_fiat"],
@@ -103,5 +81,4 @@ def check_buy(params, list_buy_options, buybag, row_idx, history_prices_row, bud
                 budget,
             )
             buybag = np.append(buybag, bought_asset_params, axis=0)
-    # amount_buy_orders = buybag.shape[0]
     return buybag

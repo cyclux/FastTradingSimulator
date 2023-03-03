@@ -6,7 +6,6 @@ websockets tensorflow-probability numexpr Bottleneck numba pyyaml
 import os
 import logging
 import asyncio
-from tradeforce import simulator
 from tradeforce.simulator import hyperparam_search
 from tradeforce.config import Config
 from tradeforce.market.backend import Backend
@@ -15,7 +14,8 @@ from tradeforce.market.updater import MarketUpdater
 from tradeforce.exchange.api import ExchangeAPI
 from tradeforce.exchange.websocket import ExchangeWebsocket
 from tradeforce.trader import Trader
-from tradeforce.utils import connect_api
+from tradeforce.utils import connect_api, monkey_patch
+from tradeforce import simulator
 
 
 class TradingEngine:
@@ -93,10 +93,11 @@ class TradingEngine:
             self.run_ws_updater()
         return self
 
-    def run_sim(self, optuna_config=None, buy_strategy=None):
+    def run_sim(self, optuna_config=None, pre_process=None, buy_strategy=None, sell_strategy=None):
+        monkey_patch(self, buy_strategy, sell_strategy)
         asyncio.run(self.init(is_sim=True))
         if optuna_config is None:
-            sim_result = simulator.run(self, buy_strategy=buy_strategy)
+            sim_result = simulator.run(self, pre_process=pre_process)
         else:
             sim_result = hyperparam_search.run(self, optuna_config)
         return sim_result
@@ -109,10 +110,11 @@ class TradingEngine:
             self.run_ws_updater(run_in_jupyter=True)
         return self
 
-    async def run_sim_jupyter(self, optuna_config=None, buy_strategy=None):
+    async def run_sim_jupyter(self, optuna_config=None, pre_process=None, buy_strategy=None, sell_strategy=None):
+        monkey_patch(self, buy_strategy, sell_strategy)
         await self.market_history.load_history()
         if optuna_config is None:
-            sim_result = simulator.run(self, buy_strategy=buy_strategy)
+            sim_result = simulator.run(self, pre_process=pre_process)
         else:
             sim_result = hyperparam_search.run(self, optuna_config)
         return sim_result

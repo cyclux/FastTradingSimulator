@@ -7,7 +7,7 @@ import numpy as np
 import numba as nb
 from tradeforce import TradingEngine
 
-config = {
+tradeforce_config = {
     "trader": {
         "id": 1,
         "budget": 1100,
@@ -49,16 +49,47 @@ config = {
 assets = []
 
 
-@nb.njit()
-def buy_strategy(params, window_history_prices_pct):
-    buyfactor_row = np.sum(window_history_prices_pct, axis=0)
+def pre_process(config, market_history):
+    sim_start_delta = config.sim_start_delta
+    asset_prices = market_history.get_market_history(start=sim_start_delta, metrics=["o"], fill_na=True)
+
+    asset_prices_pct = market_history.get_market_history(
+        start=sim_start_delta, metrics=["o"], fill_na=True, pct_change=True, pct_as_factor=False, pct_first_row=0
+    )
+
+    lower_threshold = 0.000005
+    upper_threshold = 0.999995
+    quantiles = asset_prices_pct.stack().quantile([lower_threshold, upper_threshold])
+    asset_prices_pct[asset_prices_pct > quantiles[upper_threshold]] = quantiles[upper_threshold]
+    asset_prices_pct[asset_prices_pct < quantiles[lower_threshold]] = quantiles[lower_threshold]
+
+    window = int(config.window)
+    asset_market_performance = asset_prices_pct.rolling(window=window, step=1, min_periods=window).sum(
+        engine="numba", engine_kwargs={"parallel": True, "cache": True}
+    )[window - 1 :]
+
+    preprocess_return = {
+        "asset_prices": asset_prices,
+        "asset_prices_pct": asset_prices_pct,
+        "asset_performance": asset_market_performance,
+    }
+    return preprocess_return
+
+
+@nb.njit(cache=True, parallel=False)
+def buy_strategy(params, df_asset_prices_pct, df_asset_performance):
+    row_idx = np.int64(params["row_idx"] - params["window"])  # init row_idx == 0
+    buyfactor_row = df_asset_performance[row_idx]
+    # window_history_prices_pct = get_current_window(params, df_asset_prices_pct)
+    # buyfactor_row = np.sum(window_history_prices_pct, axis=0)
+
     buy_opportunity_factor_min = params["buy_opportunity_factor"] - params["buy_opportunity_boundary"]
     buy_opportunity_factor_max = params["buy_opportunity_factor"] + params["buy_opportunity_boundary"]
     buy_options_bool = (buyfactor_row >= buy_opportunity_factor_min) & (buyfactor_row <= buy_opportunity_factor_max)
     if np.any(buy_options_bool):
         buy_option_indices = np.where(buy_options_bool)[0].astype(np.float64)
         buy_option_values = buyfactor_row[buy_options_bool]
-        # prefer_performance can be -1, 0 or 1.
+        # prefer_performance can be -1, 1, and 0.
         if params["prefer_performance"] == 0:
             buy_option_values = np.absolute(buy_option_values - params["buy_opportunity_factor"])
         buy_option_array = np.vstack((buy_option_indices, buy_option_values))
@@ -70,5 +101,27 @@ def buy_strategy(params, window_history_prices_pct):
     return buy_option_array_int
 
 
-sim_result = TradingEngine(config=config, assets=assets).run_sim(buy_strategy=buy_strategy)
+@nb.njit(cache=True, parallel=False)
+def sell_strategy(params, buybag, history_prices_row):
+    buy_option_idxs = buybag[:, 0:1].T.flatten().astype(np.int64)
+    prices_current = history_prices_row[buy_option_idxs].reshape((1, -1)).T
+    prices_profit = buybag[:, 4:5]
+
+    # check plausibility and prevent false logic
+    # profit gets a max plausible threshold
+    sanity_check_mask = (prices_current / prices_profit > 1.2).flatten()
+    prices_current[sanity_check_mask] = prices_profit[sanity_check_mask]
+    times_since_buy = params["row_idx"] - buybag[:, 2:3]
+    current_profit_ratios = prices_current / buybag[:, 3:4]
+    sell_prices_reached = prices_current >= prices_profit
+    ok_to_sells = (times_since_buy > params["hold_time_limit"]) & (
+        current_profit_ratios >= params["profit_ratio_limit"]
+    )
+    sell_assets = (sell_prices_reached | ok_to_sells).flatten()
+    return sell_assets, prices_current
+
+
+sim_result = TradingEngine(config=tradeforce_config, assets=assets).run_sim(
+    pre_process=pre_process, buy_strategy=buy_strategy, sell_strategy=sell_strategy
+)
 print(sim_result["profit"])

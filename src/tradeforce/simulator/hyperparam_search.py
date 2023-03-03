@@ -38,7 +38,8 @@ def get_optuna_storage(config_storage):
 
 
 def run(root, optuna_config):
-    bfx_history, history_buy_factors = simulator.prepare_sim(root)
+    # FIXME: prepare_sim does not exist anymore
+    asset_prices, history_buy_factors = simulator.prepare_sim(root)
     config = optuna_config["config"]
     params = optuna_config["params"]
 
@@ -52,7 +53,7 @@ def run(root, optuna_config):
                 sim_params[param] = trial.suggest_float(param, val["min"], val["max"], step=val["step"])
 
         sim_params_numba = to_numba_dict(sim_params)
-        sim_result = simulator.run(root, bfx_history, history_buy_factors, sim_params_numba)
+        sim_result = simulator.run(root, asset_prices, history_buy_factors, sim_params_numba)
         return sim_result["profit"]
 
     study = optuna.create_study(

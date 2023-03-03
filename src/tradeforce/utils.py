@@ -8,6 +8,7 @@ import pandas as pd
 
 from bfxapi import Client
 from bfxapi.constants import WS_HOST, PUB_WS_HOST, REST_HOST, PUB_REST_HOST
+import tradeforce.simulator.default_strategies as strategies
 
 
 def get_col_names(df_input, specific_col=""):
@@ -178,6 +179,22 @@ def get_sim_metrics_df(sim_trades_history_array, market_history_instance):
         ["asset_idx", "row_index_buy", "row_index_sell", "buy_orders", "tt_sell"]
     ] = sim_trades_history_df[["asset_idx", "row_index_buy", "row_index_sell", "buy_orders", "tt_sell"]].astype(int)
     return sim_trades_history_df
+
+
+def monkey_patch(root, buy_strategy, sell_strategy):
+    if buy_strategy is not None:
+        root.log.info("Custom buy_strategy loaded.")
+        # nb.njit(cache=False)(buy_strategy)
+        strategies.buy_strategy = buy_strategy
+    else:
+        root.log.info("Default buy_strategy loaded.")
+
+    if sell_strategy is not None:
+        root.log.info("Custom sell_strategy loaded.")
+        # nb.njit(cache=False)(sell_strategy)
+        strategies.sell_strategy = sell_strategy
+    else:
+        root.log.info("Default buy_strategy loaded.")
 
 
 # def get_snapshot_indices(snapshot_idx_boundary, snapshot_amount=10, snapshot_size=10000):
