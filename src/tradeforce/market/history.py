@@ -15,7 +15,7 @@ def get_pct_change(df_history, pct_first_row, as_factor=True):
     if as_factor:
         df_history_pct += 1
     if pct_first_row is not None:
-        df_history_pct.iloc[0] = 0
+        df_history_pct.iloc[0] = pct_first_row
     df_history_pct.columns = [f"{col}_pct" for col in df_history_pct.columns]
     return df_history_pct
 
