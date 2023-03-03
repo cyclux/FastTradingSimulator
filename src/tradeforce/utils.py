@@ -6,14 +6,14 @@ from configparser import ConfigParser
 import numpy as np
 import pandas as pd
 
-from bfxapi import Client
-from bfxapi.constants import WS_HOST, PUB_WS_HOST, REST_HOST, PUB_REST_HOST
+from bfxapi import Client  # type: ignore
+from bfxapi.constants import WS_HOST, PUB_WS_HOST, REST_HOST, PUB_REST_HOST  # type: ignore
 import tradeforce.simulator.default_strategies as strategies
 
 
-def get_col_names(df_input, specific_col=""):
+def get_col_names(idx: pd.Index, specific_col: str = "") -> list[str]:
     return pd.unique(
-        [f"{symbol.split('_')[0]}{'_' if specific_col else ''}{specific_col}" for symbol in list(df_input)]
+        [f"{symbol.split('_')[0]}{'_' if specific_col else ''}{specific_col}" for symbol in list(idx)]
     ).tolist()
 
 

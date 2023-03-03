@@ -2,7 +2,7 @@
 """
 
 import numpy as np
-import numba as nb
+import numba as nb  # type: ignore
 
 from tradeforce.simulator.utils import calc_fee
 import tradeforce.simulator.default_strategies as strategies

@@ -19,8 +19,8 @@ optuna_samplers = {
 }
 
 optuna_pruners = {
-    "HyperbandPruner": optuna.pruners.HyperbandPruner,
-    "MedianPruner": optuna.pruners.MedianPruner,
+    "HyperbandPruner": optuna.pruners.HyperbandPruner,  # type: ignore
+    "MedianPruner": optuna.pruners.MedianPruner,  # type: ignore
 }
 
 

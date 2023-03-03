@@ -3,7 +3,7 @@
 
 # from time import perf_counter
 import numpy as np
-import numba as nb
+import numba as nb  # type: ignore
 import tradeforce.simulator.utils as sim_utils
 import tradeforce.simulator.default_strategies as strategies
 

@@ -11,7 +11,7 @@ from tradeforce.trader.buys import buy_confirmed
 from tradeforce.trader.sells import sell_confirmed
 
 
-def check_timestamp_difference(log, start: int = None, end: int = None, freq: str = "5min") -> pd.DatetimeIndex:
+def check_timestamp_difference(log, start=None, end=None, freq="5min"):
     log.debug("Check delta between DB and WS timestamp of candles: %s (DB) %s (WS)", start, end)
     diff_range = (
         pd.date_range(

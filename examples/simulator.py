@@ -4,7 +4,7 @@
 
 import numpy as np
 
-import numba as nb
+import numba as nb  # type: ignore
 from tradeforce import TradingEngine
 
 tradeforce_config = {
@@ -45,8 +45,6 @@ tradeforce_config = {
         "snapshot_amount": 10,
     },
 }
-
-assets = []
 
 
 def pre_process(config, market_history):
@@ -121,7 +119,7 @@ def sell_strategy(params, buybag, history_prices_row):
     return sell_assets, prices_current
 
 
-sim_result = TradingEngine(config=tradeforce_config, assets=assets).run_sim(
+sim_result = TradingEngine(config=tradeforce_config).run_sim(
     pre_process=pre_process, buy_strategy=buy_strategy, sell_strategy=sell_strategy
 )
 print(sim_result["profit"])

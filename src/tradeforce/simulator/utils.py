@@ -2,9 +2,9 @@
 """
 
 import numpy as np
-import numba as nb
+import numba as nb  # type: ignore
 import numba.typed as nb_types
-from numba.core import types
+from numba.core import types  # type: ignore
 
 NB_PARALLEL = False
 NB_CACHE = True

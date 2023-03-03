@@ -228,7 +228,7 @@ class MarketHistory:
             df_market_history = get_pct_change(df_market_history, pct_first_row, as_factor=pct_as_factor)
 
         if uniform_cols and len(metrics) == 1:
-            df_market_history.columns = get_col_names(df_market_history)
+            df_market_history.columns = get_col_names(df_market_history.columns)
         return df_market_history
 
     async def update(self, history_data=None, start=None, end=None):
