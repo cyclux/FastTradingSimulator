@@ -24,7 +24,7 @@ class TradingEngine:
     def __init__(self, config=None, assets=None):
         self.logging = logging
         self.log = self.config_logger()
-        self.log.info("Fast Trading Simulator Beta 0.3.0")
+        self.log.info("Fast Trading Simulator Beta 0.4.0")
         self.assets_list_symbols = None if assets is None or len(assets) == 0 else assets
         self.config = self.register_config(config)
         self.trader = self.register_trader()
